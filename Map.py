@@ -1,4 +1,5 @@
 from LevelData import *
+import LevelData
 from genericpath import exists
 
 def loadMapFrFile(fileName):
@@ -25,4 +26,5 @@ def loadMapFrFile(fileName):
         print("File not found.")
         return [], False, 0, 0
 
-level = Map0
+def get_level():
+    return load()

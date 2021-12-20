@@ -8,7 +8,7 @@ Usage:
 from setuptools import setup
 
 APP = ['pycast.py']
-DATA_FILES = ['assets', 'levels', 'Camera.py', 'Format.py', 'Global.py', 'LevelData.py', 'Map.py', 'MapGen.py', 'NPC.py', 'Pycast.py', 'Render.py']
+DATA_FILES = ['assets', 'levels', 'Camera.py', 'Format.py', 'Global.py', 'LevelData.py', 'Map.py', 'LevelCreator.py', 'NPC.py', 'Pycast.py', 'Render.py']
 OPTIONS = {}
 
 setup(

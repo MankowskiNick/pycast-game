@@ -2,6 +2,7 @@
 import pygame, sys
 from pygame.locals import *
 from genericpath import exists
+from Sprites import *
 
 def createEmptyMap(mWidth, mHeight):
     #Define map size
@@ -91,9 +92,6 @@ def loadMapFromFile(fileName):
         return [], False, 0, 0
 
 def exportMapsToPython():
-    exportCount = int(input("How many maps would you like to patch in to the game?: "))
-    maps = []
-
     if exists("LevelData.py"):
         file = open("LevelData.py", "w")
         file.write("")
@@ -101,23 +99,22 @@ def exportMapsToPython():
         file = open("LevelData.py", "a")
     else:
         file = open("LevelData.py", "x")
-    for i in range(0,exportCount):
-        tempMap, temp1, temp2, temp3 = loadMapFromFile(input("Enter file name for map #" + str(i+1) + ": "))
-        del temp1, temp2, temp3
-        file.write("Map" + str(i) + " = [")
-        for y in range(0,len(tempMap)):
-            file.write("\n    [")
-            for x in range(0,len(tempMap[0])):
-                file.write(str(tempMap[y][x]))
-                if (x == len(tempMap[0]) - 1):
-                    file.write("]")
-                    if (y != len(tempMap) - 1):
-                        file.write(",\n")
-                    else:
-                        file.write("\n")
+    tempMap, temp1, temp2, temp3 = loadMapFromFile("levels/level.leveldata")
+    del temp1, temp2, temp3
+    file.write("Map = [")
+    for y in range(0,len(tempMap)):
+        file.write("\n    [")
+        for x in range(0,len(tempMap[0])):
+            file.write(str(tempMap[y][x]))
+            if (x == len(tempMap[0]) - 1):
+                file.write("]")
+                if (y != len(tempMap) - 1):
+                    file.write(",\n")
                 else:
-                    file.write(", ")
-        file.write("]\n\n")
+                    file.write("\n")
+            else:
+                file.write(", ")
+    file.write("]\n\ndef load():return Map")
             
 def Main():
     pygame.init()
@@ -140,18 +137,6 @@ def Main():
     blockSize = 1
 
     currentBlockID = 1
-
-    #Define wall textures
-    spriteList = {
-        1 : pygame.image.load("assets/wall.png"),
-        2 : pygame.image.load("assets/window.png"),
-        3 : pygame.image.load("assets/trunk.png"),
-
-        1000 : pygame.image.load("assets/barrel.png"),
-
-        2000 : pygame.image.load("assets/enemy.png")
-    }
-
     currentMap, mapWidth, mapHeight = createEmptyMap(mapWidth, mapHeight)
 
     blockSize = getBlocksize(mapWidth, mapHeight, width, height)
@@ -183,7 +168,7 @@ def Main():
                 if (mapX < len(currentMap[0]) and mapX >= 0 and mapY < len(currentMap) and mapY >= 0):
                     currentMap[mapY][mapX] = currentBlockID
             if (mouseAction[2]):
-                mapX, mapY = getMapCoords(pygame.mouse.get_pos())
+                mapX, mapY = getMapCoords(pygame.mouse.get_pos(), blockSize)
                 if (mapX < len(currentMap[0]) and mapX >= 0 and mapY < len(currentMap) and mapY >= 0):
                     currentMap[mapY][mapX] = 0
 
@@ -191,3 +176,5 @@ def Main():
         
         pygame.display.flip()
         pygame.display.update()
+
+Main()

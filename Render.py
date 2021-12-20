@@ -1,5 +1,6 @@
 import pygame, sys, math
 from pygame.locals import *
+from Sprites import *
 
 #Initialize Pygame
 pygame.init()   
@@ -11,23 +12,6 @@ gray = (100,100,100)
 red = (255,0,0)
 blue = (0,0,255)
 
-#Create dictionary of textures that can be easily referenced
-spriteList = {
-	#Wall Sprites
-	1 : pygame.image.load("assets/wall.png"),
-	2 : pygame.image.load("assets/window.png"),
-	3 : pygame.image.load("assets/trunk.png"),
-
-	#Object Sprites
-	1000 : pygame.image.load("assets/barrel.png"),
-
-	#NPC Sprites
-	2000 : pygame.image.load("assets/enemy.png"),
-
-	#Dead NPC Sprites
-	#3000 : pygame.image.load("assets/dead.png")
-}
-
 #Define screen size
 width = 800
 height = 600
@@ -37,7 +21,7 @@ size = (width, height)
 sizeModifier = height
 
 #How many pixels should one ray render?
-rayPixelWidth = 8
+rayPixelWidth = 1
 
 #How often should we shoot an npc ray? Every 10 pixels we can shoot one
 npcSkip = 12
@@ -74,14 +58,21 @@ def Sort(drawVect, sizeVect, coordVect):
 				coordVect[k + 1], coordVect[k] = coordVect[k], coordVect[k + 1]
 	return drawVect, sizeVect, coordVect
 
+def Sort2(vect):
+	for i in range(0,len(vect)):
+		for k in range(0,len(vect) - 1):
+			if (vect[k][1] > vect[k+1][1]):
+				vect[k], vect[k+1] = vect[k+1], vect[k]
+	return vect
+
 #playerX, playerY, playerAngle, level as inputs
 def drawOverlay(px, py, angle, npcList, drawMap):
 	for x in range(0,len(drawMap[0])):
 		for y in range(0,len(drawMap)):
 			if (drawMap[y][x] > 0 and drawMap[y][x] <= 999):
 				pygame.draw.rect(screen, black, pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize))
-			elif  (drawMap[y][x] > 999):
-				pygame.draw.circle(screen, black, (x * blockSize + blockSize / 2, y * blockSize + blockSize / 2), blockSize / 2)
+			#elif  (drawMap[y][x] > 999):
+				#pygame.draw.circle(screen, black, (x * blockSize + blockSize / 2, y * blockSize + blockSize / 2), blockSize / 2)
 			else:
 				pygame.draw.rect(screen, white, pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
 	for i in range(0,len(npcList)):
@@ -95,7 +86,8 @@ def drawOverlay(px, py, angle, npcList, drawMap):
 	fps = font.render(str(int(clock.get_fps())) + " FPS (" + str(px) + " , " + str(py) + ")", True, white)
 	screen.blit(fps, (0, height - 50))
 
-def castRay(px, py, angle, currentLevel):
+def castRay(px, py, angle, currentLevel, spriteList):
+
 	#Define ray width
 	rayWidth = fov / width
 
@@ -314,7 +306,9 @@ def castRay(px, py, angle, currentLevel):
 
 #Separate, less effecient, algorithm to raycast NPCs onto the screen, we can't just test @ integer steps
 #for these dudes because they can have non integer coordinates
+#12/19 - DEPRACATED
 def castNPC(px, py, angle, npcList, currentLevel, shot):
+
 
 	#Define step size
 	step = 0.05
@@ -337,11 +331,13 @@ def castNPC(px, py, angle, npcList, currentLevel, shot):
 		hitCurrent.append(False)
 
 	#We should only check the objects that are close to us
+	
 	checkList = []
 	for i in range(0,len(npcList)):
-		if (math.sqrt(pow(x - npcList[i].x, 2) + pow(y - npcList[i].y, 2)) <= npcRenderDist): 
+		######abs(math.atan((npcList[i].y - y) / (npcList[i].x - x)) - angle) <= fov / 2
+		checkAngle = abs(math.atan((npcList[i].y - y) / (npcList[i].x - x))) - angle
+		if abs(checkAngle <= fov / 2): 
 			checkList.append(npcList[i])
-
 
 	while (True):
 		x += step * math.cos(angle)
@@ -358,7 +354,7 @@ def castNPC(px, py, angle, npcList, currentLevel, shot):
 			minY = currentHitBox[1][0]
 			maxY = currentHitBox[1][1]
 
-			if (x >= minX and x <= maxX and y >= minY and y <= maxY and hitCurrent[i] == False):
+			if ((x >= minX and x <= maxX and y >= minY and y <= maxY) and hitCurrent[i] == False):
 
 				#Indicate that the NPC can chase the player
 				checkList[i].setActive()
@@ -373,8 +369,61 @@ def castNPC(px, py, angle, npcList, currentLevel, shot):
 		if (npcDist > npcRenderDist):
 			return renderList
 
+#Raycast check wall(simple, not a lot of checks)
+def checkWallDist(px, py, angle,level):
+	x, y = px, py
+	stepSize = 0.01
+	while True:
+		x += stepSize * math.cos(angle)
+		y += stepSize * math.sin(angle)
+		if (level[int(y)][int(x)] < 900 and level[int(y)][int(x)] > 0):
+			return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
+
+def drawObj(screen, x, y, angle, npcList, spriteList, level):
+	drawVect = []
+	
+	for i in range(0,len(npcList)):
+		objAngleFromOrig = math.atan((npcList[i].y - y) / (npcList[i].x - x))
+		if npcList[i].x - x < 0:
+			objAngleFromOrig += math.pi
+
+		angleDiff = objAngleFromOrig - angle
+
+		while objAngleFromOrig > math.pi * 2:
+			objAngleFromOrig -= math.pi * 2
+		while objAngleFromOrig < 0:
+			objAngleFromOrig += math.pi * 2
+
+		while angleDiff < 0:
+			angleDiff += math.pi * 2
+		while angleDiff > math.pi:
+			angleDiff -= math.pi * 2
+
+		if abs(angleDiff) <= fov / 2:
+		
+			distToObj = math.sqrt(pow(npcList[i].x - x, 2) + pow(npcList[i].y - y, 2))
+			distToWall = checkWallDist(x, y, objAngleFromOrig, level)
+			if distToWall > distToObj:
+				drawVect.append([npcList[i], distToObj, angleDiff + (fov / 2)])
+				npcList[i].setActive()
+
+
+	Sort2(drawVect)
+
+	for i in range(len(drawVect) - 1, -1, -1):
+		pygame.draw.circle(screen, (0,255,0), (drawVect[i][0].x * blockSize, drawVect[i][0].y * blockSize), 5)
+		drawSize = sizeModifier / drawVect[i][1]
+		sprite = spriteList[drawVect[i][0].type]
+		sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
+		xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
+		xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
+		xPos = (xDisp / xRange) * width
+		screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
+
+
+
 #Render the scene given the player coords & level
-def renderScene(px, py, pAng, currentLevel, npcList):
+def renderScene(px, py, pAng, currentLevel, npcList, spriteList):
 
 	#Define list containing currently rendered NPCs
 	columnNPCList = []
@@ -383,21 +432,11 @@ def renderScene(px, py, pAng, currentLevel, npcList):
 	for i in range(0,width * len(npcList)):
 		columnNPCList.append([[1,0], [1,0]])
 
-	#Define default values for NPC rendering values
-	npcSprite = spriteList[2000]
-	npcDist = 1
-	npcSize = 1
-	npcSpriteID = 0
-
 	#Draw background, ceiling and wall split in to two parts
 	pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
 	pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))
 
 	#Cycle through eveny column of pixels on the screen and draw a column of the appropriate size for each
-
-	drawList = []
-	sizeList = []
-	coordList = []
 	for i in range(0,int(width / rayPixelWidth)):
 		#Calculate current ray angle given fov and current camera angle
 		currentAngle = ((pAng - fov/2) + (i * rayPixelWidth * fov / width))
@@ -409,7 +448,7 @@ def renderScene(px, py, pAng, currentLevel, npcList):
 			currentAngle += 2 * math.pi
 
 		#Define column length so that out draw function looks better
-		enviroRenderOutput = castRay(px, py, currentAngle, currentLevel)
+		enviroRenderOutput = castRay(px, py, currentAngle, currentLevel, spriteList)
 
 		#Disassemble output tuple
 		columnLength, textureColumn = enviroRenderOutput
@@ -417,57 +456,5 @@ def renderScene(px, py, pAng, currentLevel, npcList):
 		#Draw column, each one will be centered vertically along screen.
 		screen.blit(textureColumn, (i * rayPixelWidth, (height / 2) - (columnLength / 2)))
 
-		#Render sprites and npcs
-
-		#Only do this every several rays, defined by npcSkip
-		if (int(i * rayPixelWidth / npcSkip) == i * rayPixelWidth / npcSkip):
-
-			#Contain raycasting output into variable
-			npcRenderOutput = castNPC(px, py, currentAngle, npcList, currentLevel, False)
-			
-			#How many NPCs are we drawing on the screen at once?
-			npcRenderCount = len(npcRenderOutput)
-
-			#Disassemble ouput from raycasting and reformat so we have info on the current
-			#and most recently rendered column
-			for k in range(0,npcRenderCount):
-
-				#Disassemble array tuple
-				npcDist = npcRenderOutput[k][0]
-				npcSpriteID = npcRenderOutput[k][1]
-
-				#Add sprite info to render list
-				columnNPCList[k][0] = (columnNPCList[k][1])
-				columnNPCList[k][1] = ([npcDist, npcSpriteID])
-
-		#Draw sprites & NPCs, don't allow out of bounds exception
-		#Don't allow out of bounds exception
-		if (i != 0):
-			#Go backwards so that we are drawing the farthest NPC first
-			for k in range(npcRenderCount, -1, -1):
-
-				#Check and see if column is last column of the current NPC being drawn
-				if (columnNPCList[k][1][1] == 0 and columnNPCList[k][0][1] != 0):
-
-					#If yes, Declare sprite size
-					npcSize = int(sizeModifier / columnNPCList[k][0][0])
-					
-					#Define texture given NPC ID
-					npcSprite = spriteList[columnNPCList[k][0][1]]
-
-					#Scale sprite to defined size
-					#npcSprite = pygame.transform.scale(npcSprite, (npcSize, npcSize))
-
-					#Only render NPC if it should be closer than the wall
-					if (npcSize > columnLength):
-
-						#Render NPC
-						#screen.blit(npcSprite, ((i * rayPixelWidth) - npcSize, (height / 2) - (npcSize / 2)))
-						drawList.append(pygame.transform.scale(npcSprite, (npcSize, npcSize)))
-						sizeList.append(npcSize)
-						coordList.append(((i * rayPixelWidth) - npcSize, (height / 2) - (npcSize / 2)))
-
-	drawList, sizeList, coordList = Sort(drawList, sizeList, coordList)
-
-	for k in range(0,len(sizeList)):
-		screen.blit(drawList[k], (coordList[k]))
+	#Render sprites and npcs
+	drawObj(screen, px, py, pAng, npcList, spriteList, currentLevel)

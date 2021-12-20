@@ -6,6 +6,8 @@ class Camera:
 		self.x, self.y = coords
 		self.angle = facing
 
+		self.health = 100
+
 		#Define camera sensitivity & movement speed
 		self.turnAdjust = math.pi / 64
 		self.movementSpeed = 0.05
