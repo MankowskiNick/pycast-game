@@ -20,9 +20,10 @@ Initial Commit
 
 ## Upcoming changes
 ###### 10% -Implementation of a health system.
+###### 0% -Implement AI shooting
+###### 0% -Implement AI pathfinding algorithm
 ###### 0% -Implement support for creation of new, empty levels.
 ###### 0% -Implement character drawing support for new levels on level editor
-###### 0% -Create and implement additional textures, objects, and NPCs
 
 ## Utilization of the in game level editor
 Pycast comes with a map already patched in to the game, however, you can change this through a built in level editor.  To access the editor, simply press the m key while in game.  To exit the editor, press the q key while in the editor
