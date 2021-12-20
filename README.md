@@ -2,7 +2,7 @@
 Raycasting engine written in Python with the Pygame library.
 
 ## Changelog
-### 12/19s
+### 12/19
 +New object rendering system resulting in major performance uplift.  
 +Added support for live map updates with ability to save and export.  
 +Bug fixes.  
