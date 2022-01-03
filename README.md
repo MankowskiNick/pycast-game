@@ -2,6 +2,9 @@
 Raycasting engine written in Python with the Pygame library.
 
 ## Changelog
+### 1/xx
++Optimized LevelCreator.py
++Added fullscreen support(fullscreen option in Render.py)
 ### 12/19
 +New object rendering system resulting in major performance uplift.  
 +Added support for live map updates with ability to save and export.  
@@ -28,7 +31,7 @@ Initial Commit
 ## Utilization of the in game level editor
 Pycast comes with a map already patched in to the game, however, you can change this through a built in level editor.  To access the editor, simply press the m key while in game.  To exit the editor, press the q key while in the editor
 ### Changing tile selection
-By default, the tile assigned at dictionary value spriteList[1] is the tile you are placing.  To change this value, press a number key that corresponds to the list of textures on the right hand side of the screen.  A green box will highlight the currently selected tile value.
+By default, the tile assigned at dictionary value spriteList[1] is the tile you are placing.  To change this value, press a number key that corresponds to the list of textures on the right hand side of the screen or click the mouse on the desired tile from the right hand menu of tiles.  A green box will highlight the currently selected tile value.
 ### Saving levels
 Saving levels using MapGen.py will write level information to levels/[filename].leveldata.  Upon saving, you will be prompted to include a file name that you would like to save to.  Saving a file does **NOT** permanently patch it in to the engine and is intended only to store progress on a current level design.
 ### Opening levels

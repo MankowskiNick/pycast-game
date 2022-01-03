@@ -17,20 +17,18 @@ mapLevel = get_level()
 #Create player olbject with coords found by findPlayer
 player = Camera.Camera(Format.findPlayer(mapLevel), 0)
 
-#Should we draw the minimap to the screen?
-drawMap = True
-
 spriteList = createSpriteList()
 
 #Find NPCs in level data
 npcList = NPC.findNPC(mapLevel)
-for i in range(0,len(npcList)):
-	npcList[i].npcCount = len(npcList)
+
+#Set cursor to invisible
+pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 
 while True:
 
 	#Set framerate
-	clock.tick(45)
+	clock.tick(60)
 	pygame.key.set_repeat(10,10)
 
 	#Update NPCs
@@ -46,16 +44,29 @@ while True:
 
 		#Handling keyboard input
 		elif event.type == KEYDOWN:
+
+			#Handling escape key exit
+			if event.key == K_ESCAPE:
+				pygame.quit()
+				sys.exit()
+
+			#Move player according to key
 			player.movePlayer(event.key, mapLevel)
 			if event.key == pygame.K_m:
-				mapLevel, npcList = LevelCreator.Main(player.x, player.y, mapLevel, npcList)
+				mapLeveddwdal, npcList = LevelCreator.Main(player.x, player.y, mapLevel, npcList)
+
+		#Move mouse and adjust camera angle accordingly
+		elif event.type == MOUSEMOTION:
+			player.angle -= (width / 2 - pygame.mouse.get_pos()[0]) / (width * 64)
+
+			pygame.mouse.set_pos(width / 2, height / 2)
+
 
 	#Render Scene
 	Render.renderScene(player.x, player.y, player.angle, mapLevel, npcList, spriteList)
 
 	#Draw minimap
-	if drawMap:
-		drawOverlay(player.x, player.y, player.angle, npcList, mapLevel)
+	drawOverlay(player.x, player.y, player.angle, npcList, mapLevel)
 
 	pygame.display.flip() 
 	pygame.display.update()

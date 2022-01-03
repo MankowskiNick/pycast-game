@@ -20,14 +20,11 @@ size = (width, height)
 #Size Modifier, how large should the final image be rendered?
 sizeModifier = height
 
+#Fullscreen?
+fullscreen = False
+
 #How many pixels should one ray render?
 rayPixelWidth = 1
-
-#How often should we shoot an npc ray? Every 10 pixels we can shoot one
-npcSkip = 12
-
-#How far should we look for NPCs?
-npcRenderDist = 8
 
 #Define camera field of view in radians
 fov = 60 * math.pi / 180
@@ -42,6 +39,8 @@ font = pygame.font.Font(None, 30)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("PyCasting")
 
+if fullscreen: pygame.display.toggle_fullscreen()
+
 #Blocksize to render minimap
 blockSize = 10
 
@@ -49,16 +48,7 @@ blockSize = 10
 spriteDimension = 16
 
 #Bubble sort, used to sort the list of sprites to draw
-def Sort(drawVect, sizeVect, coordVect):
-	for i in range(0,len(sizeVect)):
-		for k in range(0,len(sizeVect) - 1):
-			if (sizeVect[k] > sizeVect[k+1]):
-				sizeVect[k + 1], sizeVect[k] = sizeVect[k], sizeVect[k + 1]
-				drawVect[k + 1], drawVect[k] = drawVect[k], drawVect[k + 1]
-				coordVect[k + 1], coordVect[k] = coordVect[k], coordVect[k + 1]
-	return drawVect, sizeVect, coordVect
-
-def Sort2(vect):
+def Sort(vect):
 	for i in range(0,len(vect)):
 		for k in range(0,len(vect) - 1):
 			if (vect[k][1] > vect[k+1][1]):
@@ -408,7 +398,7 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level):
 				npcList[i].setActive()
 
 
-	Sort2(drawVect)
+	Sort(drawVect)
 
 	for i in range(len(drawVect) - 1, -1, -1):
 		pygame.draw.circle(screen, (0,255,0), (drawVect[i][0].x * blockSize, drawVect[i][0].y * blockSize), 5)
@@ -419,8 +409,6 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level):
 		xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
 		xPos = (xDisp / xRange) * width
 		screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
-
-
 
 #Render the scene given the player coords & level
 def renderScene(px, py, pAng, currentLevel, npcList, spriteList):
