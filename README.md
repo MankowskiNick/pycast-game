@@ -32,10 +32,10 @@ Below is a list of changes I intend to make, as of now, this is **all** that wil
 
 ## Upcoming technical changes
 ###### 0% -Implement AI shooting & pathfinding with different difficulty options
-###### 0% -Upgrade minimap
+###### 0% -Upgrade minimap to show more detail
 ###### 0% -Add ability to remove NPCs/pickups from the level editor
 ###### 0% -Implement support for creation of new, empty levels.
-###### 0% -Implement character drawing support for new levels on level editor
+###### 0% -Implement a "spawn location" highlight in level editor.
 ###### 0% -Add documentation for adding new things to engine(wall textures, objects, npcs, pickups, weapons)
 ###### 0% -Add sound and music support
 ###### 0% -Add support for changing levels
@@ -73,6 +73,6 @@ Exporting a saved .leveldata file will semi-permanently patch that level in to t
 ###### Q - Exit in game level editor
 ###### O - Open from file
 ###### S - Save to file
-###### E - Export saved file to game. NOTE: Exporting unsaved levels is currently supported.
+###### E - Export saved file to game. NOTE: Exporting unsaved levels is not currently supported.
 ###### Left click - place tile at mouse position
 ###### Right click - remove tile at mouse position
