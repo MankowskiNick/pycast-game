@@ -27,13 +27,30 @@ Raycasting engine written in Python with the Pygame library.
 ### 12/1 
 Initial Commit
 
-## Upcoming changes
-###### 0% -Implement AI shooting
-###### 0% -Implement AI pathfinding algorithm
+# Changes
+Below is a list of changes I intend to make, as of now, this is **all** that will be done before this project is considered "complete" and is to serve as a checklist.  This, of course, is tentative.  
+
+## Upcoming technical changes
+###### 0% -Implement AI shooting & pathfinding with different difficulty options
 ###### 0% -Upgrade minimap
 ###### 0% -Add ability to remove NPCs/pickups from the level editor
 ###### 0% -Implement support for creation of new, empty levels.
 ###### 0% -Implement character drawing support for new levels on level editor
+###### 0% -Add documentation for adding new things to engine(wall textures, objects, npcs, pickups, weapons)
+###### 0% -Add sound and music support
+###### 0% -Add support for changing levels
+###### 0% -Add support for menus
+
+## Upcoming creative changes
+###### -Add more enemies
+###### -Compose sounds and music
+###### -Create more levels
+###### -Create and stylize menus
+###### -Finish balancing game
+
+## Upcoming changes prior to final release
+###### -Finalize balancing mechanics
+###### -Split game into release and development version(one with map editor, one without)
 
 ## Utilization of the in game level editor
 Pycast comes with a map already patched in to the game, however, you can change this through a built in level editor.  To access the editor, simply press the m key while in game.  To exit the editor, press the q key while in the editor
