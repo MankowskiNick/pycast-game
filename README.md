@@ -28,7 +28,7 @@ Raycasting engine written in Python with the Pygame library.
 Initial Commit
 
 # Changes
-Below is a list of changes I intend to make, as of now, this is **all** that will be done before this project is considered "complete" and is to serve as a checklist.  This, of course, is tentative.  
+Below is a list of changes I intend to make, as of now, this is **all** that will be done before this project is considered "complete" and is to serve as a checklist.  This, of course, is tentative.  This list will be done mostly in order from top to bottom, starting with all of the intended technical changes.
 
 ## Upcoming technical changes
 ###### 0% -Implement AI shooting & pathfinding with different difficulty options
@@ -46,9 +46,9 @@ Below is a list of changes I intend to make, as of now, this is **all** that wil
 ###### -Compose sounds and music
 ###### -Create more levels
 ###### -Create and stylize menus
-###### -Finish balancing game
+###### -Come up with a name(?)
 
-## Upcoming changes prior to final release
+## Upcoming final changes prior to completion
 ###### -Finalize balancing mechanics
 ###### -Split game into release and development version(one with map editor, one without)
 
