@@ -11,6 +11,7 @@ white = (255,255,255)
 gray = (100,100,100)
 red = (255,0,0)
 blue = (0,0,255)
+brown = (235, 143, 52)
 
 #Define screen size
 width = 800
@@ -39,6 +40,12 @@ font = pygame.font.Font(None, 30)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("PyCasting")
 
+#Load UI
+UI = pygame.image.load("assets/system/gui.png")
+UI_scaleX, UI_scaleY = width / UI.get_width(), height / UI.get_height()
+UI = pygame.transform.scale(UI, (width, height))
+
+#Toggle fullscreen if desired
 if fullscreen: pygame.display.toggle_fullscreen()
 
 #Blocksize to render minimap
@@ -46,6 +53,17 @@ blockSize = 10
 
 #Textures are all squares, what are their dimensions?
 spriteDimension = 16
+
+#Convert int to list representing 3 digits
+def intToList(n):
+	if n > 999:
+		return [9, 9, 9]
+	else:
+		dig1 = int(n / 100)
+		dig2 = int(n / 10) - (dig1 * 10)
+		dig3 = int(n) - (dig1 * 100) - (dig2 * 10)
+		return [dig1, dig2, dig3]
+
 
 #Bubble sort, used to sort the list of sprites to draw
 def Sort(vect):
@@ -56,7 +74,8 @@ def Sort(vect):
 	return vect
 
 #playerX, playerY, playerAngle, level as inputs
-def drawOverlay(px, py, angle, npcList, drawMap):
+def drawOverlay(player, npcList, drawMap):
+	px, py, angle = player.x, player.y, player.angle
 	for x in range(0,len(drawMap[0])):
 		for y in range(0,len(drawMap)):
 			if (drawMap[y][x] > 0 and drawMap[y][x] <= 999):
@@ -370,15 +389,20 @@ def checkWallDist(px, py, angle,level):
 			return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
 
 def drawObj(screen, x, y, angle, npcList, spriteList, level):
+	#Create empty list of objects to draw
 	drawVect = []
 	
+	#Cycle through every object
 	for i in range(0,len(npcList)):
+		#Determine object angle from origin line at camera position
 		objAngleFromOrig = math.atan((npcList[i].y - y) / (npcList[i].x - x))
 		if npcList[i].x - x < 0:
 			objAngleFromOrig += math.pi
 
+		#Calculate difference between object angle and camera facing
 		angleDiff = objAngleFromOrig - angle
 
+		#Adjust values accordingly to fall within trig parameters
 		while objAngleFromOrig > math.pi * 2:
 			objAngleFromOrig -= math.pi * 2
 		while objAngleFromOrig < 0:
@@ -389,17 +413,22 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level):
 		while angleDiff > math.pi:
 			angleDiff -= math.pi * 2
 
+		#If the difference in angle falls within the FOV
 		if abs(angleDiff) <= fov / 2:
-		
+			
+			#Calculate obj dist and the distance to the nearest wall
 			distToObj = math.sqrt(pow(npcList[i].x - x, 2) + pow(npcList[i].y - y, 2))
 			distToWall = checkWallDist(x, y, objAngleFromOrig, level)
+
+			#If the object is closer than the nearest wall, add to draw vector
 			if distToWall > distToObj:
 				drawVect.append([npcList[i], distToObj, angleDiff + (fov / 2)])
 				npcList[i].setActive()
 
-
+	#Sort things by how close they are
 	Sort(drawVect)
 
+	#Render them in order from furthest to closest, closest being draw on top
 	for i in range(len(drawVect) - 1, -1, -1):
 		pygame.draw.circle(screen, (0,255,0), (drawVect[i][0].x * blockSize, drawVect[i][0].y * blockSize), 5)
 		drawSize = sizeModifier / drawVect[i][1]
@@ -411,38 +440,54 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level):
 		screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
 
 #Render the scene given the player coords & level
-def renderScene(px, py, pAng, currentLevel, npcList, spriteList):
+def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font):
+    player.x, player.y, player.angle = player.x, player.y, player.angle
+    #Draw background, ceiling and wall split in to two parts
+    pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
+    pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))
 
-	#Define list containing currently rendered NPCs
-	columnNPCList = []
+    #Cycle through eveny column of pixels on the screen and draw a column of the appropriate size for each
+    for i in range(0,int(width / rayPixelWidth)):
+        #Calculate current ray angle given fov and current camera angle
+        currentAngle = ((player.angle - fov/2) + (i * rayPixelWidth * fov / width))
 
-	#Create columnNPCList deep enough to store data
-	for i in range(0,width * len(npcList)):
-		columnNPCList.append([[1,0], [1,0]])
+        #Overflow for 2pi and 0
+        if currentAngle > 2 * math.pi:
+            currentAngle -= 2 * math.pi
+        elif currentAngle < 0:
+            currentAngle += 2 * math.pi
 
-	#Draw background, ceiling and wall split in to two parts
-	pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
-	pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))
+        #Define column length so that out draw function looks better
+        enviroRenderOutput = castRay(player.x, player.y, currentAngle, currentLevel, spriteList)
 
-	#Cycle through eveny column of pixels on the screen and draw a column of the appropriate size for each
-	for i in range(0,int(width / rayPixelWidth)):
-		#Calculate current ray angle given fov and current camera angle
-		currentAngle = ((pAng - fov/2) + (i * rayPixelWidth * fov / width))
+        #Disassemble output tuple
+        columnLength, textureColumn = enviroRenderOutput
 
-		#Overflow for 2pi and 0
-		if currentAngle > 2 * math.pi:
-			currentAngle -= 2 * math.pi
-		elif currentAngle < 0:
-			currentAngle += 2 * math.pi
+        #Draw column, each one will be centered vertically along screen.
+        screen.blit(textureColumn, (i * rayPixelWidth, (height / 2) - (columnLength / 2)))
 
-		#Define column length so that out draw function looks better
-		enviroRenderOutput = castRay(px, py, currentAngle, currentLevel, spriteList)
+    #Render sprites and npcs
+    drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, currentLevel)
 
-		#Disassemble output tuple
-		columnLength, textureColumn = enviroRenderOutput
+    #Render smoke cloud from barrel
+    if frameCount - currentWeapon.shotFrame <= 2 and frameCount - currentWeapon.shotFrame >= 0:
+        screen.blit(currentWeapon.boomList[frameCount - currentWeapon.shotFrame], (0, 60 + currentWeapon.yOffset))
+    
+    #Render Weapon
+    screen.blit(currentWeapon.currentSprite, (0,60 + currentWeapon.yOffset))
+    
+	#Draw UI
+    screen.blit(UI, (0,0))
+	
+	#Draw ammo count & health
+    ammoCountList = intToList(player.ammoCount[currentWeapon.ammoID])
+    healthCountList = intToList(player.hp)
 
-		#Draw column, each one will be centered vertically along screen.
-		screen.blit(textureColumn, (i * rayPixelWidth, (height / 2) - (columnLength / 2)))
+    screen.blit(font[healthCountList[0]], (1 * UI_scaleX, height - (4 * UI_scaleY)))
+    screen.blit(font[healthCountList[1]], (3 * UI_scaleX, height - (4 * UI_scaleY)))
+    screen.blit(font[healthCountList[2]], (5 * UI_scaleX, height - (4 * UI_scaleY)))
 
-	#Render sprites and npcs
-	drawObj(screen, px, py, pAng, npcList, spriteList, currentLevel)
+    screen.blit(font[ammoCountList[0]], (width - (7 * UI_scaleX), height - (4 * UI_scaleY)))
+    screen.blit(font[ammoCountList[1]], (width - (5 * UI_scaleX), height - (4 * UI_scaleY)))
+    screen.blit(font[ammoCountList[2]], (width - (3 * UI_scaleX), height - (4 * UI_scaleY)))
+

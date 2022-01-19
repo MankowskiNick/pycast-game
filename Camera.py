@@ -6,7 +6,12 @@ class Camera:
 		self.x, self.y = coords
 		self.angle = facing
 
-		self.health = 100
+		self.hp = 100
+
+		self.ammoCount = [
+			32,
+			12,
+		]
 
 		#Define camera sensitivity & movement speed
 		self.turnAdjust = math.pi / 64
@@ -64,3 +69,13 @@ class Camera:
 			if (xOffset < self.movementSpeed or yOffSet < self.movementSpeed):
 				self.x += self.movementSpeed * math.sin(self.angle)
 				self.y -= self.movementSpeed * math.cos(self.angle)
+	
+	def addHealth(self, hp):
+		self.hp += hp
+
+		if self.hp > 100:
+			self.hp == 100
+	
+	def addAmmo(self, count):
+		for i in range(0,len(self.ammoCount)):
+			self.ammoCount[i] += count

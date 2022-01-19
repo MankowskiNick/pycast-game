@@ -2,9 +2,15 @@
 Raycasting engine written in Python with the Pygame library.
 
 ## Changelog
-### 1/xx
-+Optimized LevelCreator.py
-+Added fullscreen support(fullscreen option in Render.py)
+### 1/19
++Optimized LevelCreator.py  
++Added fullscreen support(fullscreen option in Render.py)  
++Greatly optimized rendering speed  
++Implemented weapon system  
++Implemented health system  
++Implemented UI showcasing relevant info to player  
++Changed file structure of "assets" folder  
++Implemented "ghost" assets that have been unused thus far  
 ### 12/19
 +New object rendering system resulting in major performance uplift.  
 +Added support for live map updates with ability to save and export.  
@@ -12,19 +18,20 @@ Raycasting engine written in Python with the Pygame library.
 ### 12/6
 +Added LevelCreator.py, the in game level editor  
 +Support for in game level editor/creator  
-+GUI for saving/loading/exporting files in level creator 
++GUI for saving/loading/exporting files in level creator  
 +GUI for changing block ID within level editor  
 +Improved upon collision detection for NPC's  
 +Implemented collision detection for objects  
-+Added Sprites.py, a universal sprite container 
++Added Sprites.py, a universal sprite container  
 -Depracated MapGen.py, this utility functioned outside of the build of the engine and has bee replaced by the in game level editor
 ### 12/1 
 Initial Commit
 
 ## Upcoming changes
-###### 10% -Implementation of a health system.
 ###### 0% -Implement AI shooting
 ###### 0% -Implement AI pathfinding algorithm
+###### 0% -Upgrade minimap
+###### 0% -Add ability to remove NPCs/pickups from the level editor
 ###### 0% -Implement support for creation of new, empty levels.
 ###### 0% -Implement character drawing support for new levels on level editor
 

@@ -328,10 +328,10 @@ def Main(px, py, currentMap, npcList):
                         if currentBlockID < 1000:
                             currentMap[mapY][mapX] = currentBlockID
                         elif currentBlockID < 2000:
-                            npcList.append(NPC.NPC((mapX, mapY), currentBlockID, len(npcList)))
+                            npcList.append(NPC.NPC((mapX, mapY), currentBlockID, len(npcList), 100))
                             currentMap[mapY][mapX] = currentBlockID
                         elif currentBlockID > 1999:
-                            npcList.append(NPC.NPC((mapX, mapY), currentBlockID, len(npcList)))
+                            npcList.append(NPC.NPC((mapX, mapY), currentBlockID, len(npcList), 100))
                 
                 #If the map is out of bounds, check to see if we are selecting a new tile
                 else:

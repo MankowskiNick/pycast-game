@@ -6,18 +6,19 @@ def findNPC(focusMap):
 	for x in range(0,len(focusMap[0])):
 		for y in range(0,len(focusMap)):
 			if focusMap[y][x] > 999 and focusMap[y][x] < 2000:
-				npcList.append(NPC((x, y), focusMap[y][x], len(npcList)))
+				npcList.append(NPC((x, y), focusMap[y][x], len(npcList), 100))
 				#focusMap[y][x] = 0
 			if focusMap[y][x] > 1999:# and focusMap[y][x]:
-				npcList.append(NPC((x, y), focusMap[y][x], len(npcList)))
+				npcList.append(NPC((x, y), focusMap[y][x], len(npcList), 100))
 				focusMap[y][x] = 0
 			else:
 				continue
 	return npcList
 
 class NPC:
-	def __init__(self, coords, type, label):
+	def __init__(self, coords, type, label, hp):
 		#Define coords
+		self.coords = coords
 		self.x, self.y = coords
 
 		self.startX, self.startY = coords
@@ -35,17 +36,22 @@ class NPC:
 		else:
 			self.isObject = False
 
+		#Define whether or not person is dead
+		if self.type >= 3000 or self.isObject:
+			self.isAlive = False
+		else:
+			self.isAlive = True
+
 		#Define label, position in the npcList array that this npc lies
 		self.label = label
 
 		#Define step size
 		self.stepSize = 0.01
 
-		#Define whether or not to display dead person sprite
-		self.isAlive = True
-
 		self.xDisp = 0
 		self.yDisp = 0
+
+		self.hp = hp
 
 		#Define npc as not active, npc hasnt been seen
 		self.deActivate()
@@ -53,13 +59,14 @@ class NPC:
 		#stored as [[x0,x1],[y0,y1]]
 		self.updateHitBox()
 
-	def walk(self, pCoords, level, npcList):
-		if (self.isActive and not self.isObject):
-			px, py = pCoords
+	def walk(self, player, level, npcList):
+		self.coords = self.x, self.y
 
-			xDist = px - self.x
-			yDist = py - self.y
-			distTo = math.sqrt(pow(xDist, 2) + pow(yDist, 2))
+		xDist = player.x - self.x
+		yDist = player.y - self.y
+		distTo = math.sqrt(pow(xDist, 2) + pow(yDist, 2))
+		if (self.isActive and (not self.isObject) and self.isAlive):
+
 
 			self.xDisp = self.stepSize * xDist / distTo
 			self.yDisp = self.stepSize * yDist / distTo
@@ -67,8 +74,14 @@ class NPC:
 			if (self.wallDetect(level) == False and self.npcDetect(npcList) == False and distTo > 1):
 				self.x += self.xDisp
 				self.y += self.yDisp
+				
+			self.updateHitBox()
 
-		self.updateHitBox()
+		elif (not self.isObject and not self.isAlive):
+			if distTo < 0.3:
+				self.activate(player)
+				return True
+		return False
 
 	def wallDetect(self, level):
 		if (level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] > 0):
@@ -115,3 +128,22 @@ class NPC:
 	
 	def updateLabel(self, n):
 		self.label = n
+
+	def takeDamage(self, dmg):
+		if self.isAlive:
+			self.hp -= dmg
+			if self.hp <= 0:
+				self.die()
+				return True
+		return False
+	
+	def activate(self, player):
+		if self.type < 4000:
+			return
+		else:
+			if self.type == 4000:
+				player.addHealth(15)
+			elif self.type == 4001:
+				player.addAmmo(12)
+			elif self.type == 4002:
+				player.addAmmo(4)
