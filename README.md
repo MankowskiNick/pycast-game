@@ -73,6 +73,6 @@ Exporting a saved .leveldata file will semi-permanently patch that level in to t
 ###### Q - Exit in game level editor
 ###### O - Open from file
 ###### S - Save to file
-###### E - Export saved file to game. NOTE: Exporting unsaved levels is not currently supported.
+###### E - Export saved file to game. NOTE: Exporting unsaved levels is currently supported.
 ###### Left click - place tile at mouse position
 ###### Right click - remove tile at mouse position
