@@ -77,7 +77,7 @@ class NPC:
 				
 			self.updateHitBox()
 
-		elif (not self.isObject and not self.isAlive):
+		elif (not self.isObject and not self.isAlive and self.type >= 4000):
 			if distTo < 0.3:
 				self.activate(player)
 				return True
@@ -137,6 +137,7 @@ class NPC:
 				return True
 		return False
 	
+	#In the event the self object is a picup, activate whatever it is intended to do.
 	def activate(self, player):
 		if self.type < 4000:
 			return

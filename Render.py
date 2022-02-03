@@ -14,8 +14,8 @@ blue = (0,0,255)
 brown = (235, 143, 52)
 
 #Define screen size
-width = 800
-height = 600
+width = 1200
+height = 900
 size = (width, height)
 
 #Size Modifier, how large should the final image be rendered?
@@ -173,7 +173,7 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		#Player looking up
 		elif rayAng >= math.pi:
 			#Collision? If yes, break loop and have distance value set
-			if (currentLevel[int(y-1)][int(x)] > 0 and currentLevel[int(y-1)][int(x)] < 900):
+			if (currentLevel[int(y-1)][int(x)] > 0 and currentLevel[int(y-1)][int(x)] <= 999):
 				hx = x
 				hy = y-1
 
@@ -188,7 +188,7 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		#Camera looking down
 		elif rayAng < math.pi:
 			#Collision? If yes, break loop and have distance value set
-			if (currentLevel[int(y)][int(x)] > 0 and currentLevel[int(y)][int(x)] < 900):
+			if (currentLevel[int(y)][int(x)] > 0 and currentLevel[int(y)][int(x)] <= 999):
 				hx = x
 				hy = y
 
@@ -249,7 +249,7 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		#Player looking left
 		elif rayAng >= math.pi / 2 and rayAng <= math.pi * 3/2:
 			#Collision? If yes, break loop and have distance value set
-			if (currentLevel[int(y)][int(x-1)] > 0 and currentLevel[int(y)][int(x-1)] < 900):
+			if (currentLevel[int(y)][int(x-1)] > 0 and currentLevel[int(y)][int(x-1)] <= 999):
 				vx = x-1
 				vy = y
 
@@ -264,7 +264,7 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		#Player looking right
 		elif rayAng > math.pi * 3/2 or rayAng < math.pi / 2:
 			#Collision? If yes, break loop and have distance value set
-			if (currentLevel[int(y)][int(x)] > 0 and currentLevel[int(y)][int(x)] < 900):
+			if (currentLevel[int(y)][int(x)] > 0 and currentLevel[int(y)][int(x)] <= 999):
 				vx = x
 				vy = y
 
@@ -385,7 +385,7 @@ def checkWallDist(px, py, angle,level):
 	while True:
 		x += stepSize * math.cos(angle)
 		y += stepSize * math.sin(angle)
-		if (level[int(y)][int(x)] < 900 and level[int(y)][int(x)] > 0):
+		if (level[int(y)][int(x)] < 999 and level[int(y)][int(x)] > 0):
 			return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
 
 def drawObj(screen, x, y, angle, npcList, spriteList, level):
@@ -441,7 +441,6 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level):
 
 #Render the scene given the player coords & level
 def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font):
-    player.x, player.y, player.angle = player.x, player.y, player.angle
     #Draw background, ceiling and wall split in to two parts
     pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
     pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))
@@ -478,11 +477,11 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
     
 	#Draw UI
     screen.blit(UI, (0,0))
-	
+    
 	#Draw ammo count & health
     ammoCountList = intToList(player.ammoCount[currentWeapon.ammoID])
     healthCountList = intToList(player.hp)
-
+    
     screen.blit(font[healthCountList[0]], (1 * UI_scaleX, height - (4 * UI_scaleY)))
     screen.blit(font[healthCountList[1]], (3 * UI_scaleX, height - (4 * UI_scaleY)))
     screen.blit(font[healthCountList[2]], (5 * UI_scaleX, height - (4 * UI_scaleY)))
@@ -491,3 +490,5 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
     screen.blit(font[ammoCountList[1]], (width - (5 * UI_scaleX), height - (4 * UI_scaleY)))
     screen.blit(font[ammoCountList[2]], (width - (3 * UI_scaleX), height - (4 * UI_scaleY)))
 
+
+	

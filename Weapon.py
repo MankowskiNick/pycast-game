@@ -12,6 +12,7 @@ class Weapon:
 
         self.yOffset = 0
 
+        #Dictionary used to calculate the yOffset for good recoil
         self.velocityIndex = {
             0 : -3,
             1 : -2,
@@ -24,8 +25,11 @@ class Weapon:
             8 : 1.2,
             9 : 1.1,
         }
+        
+        #Dictionary used to animate the sprite correctly
+        self.animationIndex = [1,2,3,3,2]
 
-        self.animationIndex = [1,2,3,2,1]
+        #Set the current sprite to default
         self.currentSprite = sprite[0]
 
         self.boomList = boomList
@@ -50,12 +54,15 @@ class Weapon:
                 return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
 
     def Animate(self, frameCount):
+        #Don't animate if it isn't necessary, shotFrame is the frame where the player pressed the shoot button, it is -1 by default
         if self.shotFrame == -1: 
             return
+        #If the animation is currently underway in its 10 frame lifetime
         elif frameCount - self.shotFrame <= 9:
-            frameNumber = int((frameCount - self.shotFrame) / 2)
-            self.currentSprite = self.sprite[self.animationIndex[frameNumber]]
+            #Change the current sprite to the one necessary for animation, it should change every 2 frames
+            self.currentSprite = self.sprite[self.animationIndex[int((frameCount - self.shotFrame) / 2)]]
 
+            #Update the yOffset
             self.yOffset += 10*self.velocityIndex[frameCount - self.shotFrame]
         else:
             self.shotFrame = -1
@@ -67,6 +74,7 @@ class Weapon:
         self.currrentSprite = self.sprite[0]
 
     def Shoot(self, player, npcList, level, shotFrame):
+        #Verify that the player has ammo
         if player.ammoCount[self.ammoID] <= 0:
             return
         else:
@@ -84,35 +92,36 @@ class Weapon:
             
             #Cycle through every object
             for i in range(0,len(npcList)):
-                #Determine object angle from origin line at camera position
-                objAngleFromOrig = math.atan((npcList[i].y - y) / (npcList[i].x - x))
-                if npcList[i].x - x < 0:
-                    objAngleFromOrig += math.pi
+                if npcList[i].type >= 2000 and npcList[i].type < 3000:
+                    #Determine object angle from origin line at camera position
+                    objAngleFromOrig = math.atan((npcList[i].y - y) / (npcList[i].x - x))
+                    if npcList[i].x - x < 0:
+                        objAngleFromOrig += math.pi
 
-                #Calculate difference between object angle and camera facing
-                angleDiff = objAngleFromOrig - angle
+                    #Calculate difference between object angle and camera facing
+                    angleDiff = objAngleFromOrig - angle
 
-                #Adjust values accordingly to fall within trig parameters
-                while objAngleFromOrig > math.pi * 2:
-                    objAngleFromOrig -= math.pi * 2
-                while objAngleFromOrig < 0:
-                    objAngleFromOrig += math.pi * 2
+                    #Adjust values accordingly to fall within trig parameters
+                    while objAngleFromOrig > math.pi * 2:
+                        objAngleFromOrig -= math.pi * 2
+                    while objAngleFromOrig < 0:
+                        objAngleFromOrig += math.pi * 2
 
-                while angleDiff < 0:
-                    angleDiff += math.pi * 2
-                while angleDiff > math.pi:
-                    angleDiff -= math.pi * 2
+                    while angleDiff < 0:
+                        angleDiff += math.pi * 2
+                    while angleDiff > math.pi:
+                        angleDiff -= math.pi * 2
 
-                #If the difference in angle falls within the FOV
-                if abs(angleDiff) <= self.sprd * math.pi/360:
-                    
-                    #Calculate obj dist and the distance to the nearest wall
-                    distToObj = math.sqrt(pow(npcList[i].x - x, 2) + pow(npcList[i].y - y, 2))
-                    distToWall = self.checkWallDist(x, y, objAngleFromOrig, level)
+                    #If the difference in angle falls within the FOV
+                    if abs(angleDiff) <= self.sprd * math.pi/180:
+                        
+                        #Calculate obj dist and the distance to the nearest wall
+                        distToObj = math.sqrt(pow(npcList[i].x - x, 2) + pow(npcList[i].y - y, 2))
+                        distToWall = self.checkWallDist(x, y, objAngleFromOrig, level)
 
-                    #If the object is closer than the nearest wall, add to draw vector
-                    if distToWall > distToObj:
-                        targVect.append([i, distToObj])
+                        #If the object is closer than the nearest wall, add to draw vector
+                        if distToWall > distToObj:
+                            targVect.append([i, distToObj])
 
             #Sort things by how close they are
             self.Sort(targVect)
@@ -121,4 +130,4 @@ class Weapon:
             if not targVect == []:
                 if targVect[len(targVect)-1][1] <= self.rng:
                     if npcList[targVect[len(targVect)-1][0]].takeDamage(self.dmg):
-                        npcList.append(NPC.NPC(npcList[targVect[len(targVect)-1][0]].coords, 4002, len(npcList), 100))
+                        npcList.append(NPC.NPC(npcList[targVect[0][0]].coords, 4002, len(npcList), 100))

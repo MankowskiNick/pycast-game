@@ -3,20 +3,26 @@ import pygame, sys, math
 from pygame.locals import *
 
 #Import custom libraaries
-import Render, Map, Format, Camera, NPC, LevelCreator, Sprites, Weapon
+import Render, Format, Camera, NPC, LevelCreator, Sprites, Weapon, HIRs
 from Global import *
 from Render import *
-from Map import *
 from Format import *
 from Sprites import *
 from Weapon import *
 
 #Initialize pygame
 pygame.init()
-mapLevel = get_level()
+
+#Load map and NPC list
+mapLevel, npcList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/level.leveldata")
+del tmp1, tmp2, tmp3
 
 #Create player olbject with coords found by findPlayer
 player = Camera.Camera(Format.findPlayer(mapLevel), 0)
+
+#Create a HIRs of the level
+levelHIR= HIRs.HIRs(mapLevel)
+mapLevel = levelHIR.level
 
 #Create all sprite lists used by program
 spriteList = createSpriteList()
@@ -37,8 +43,8 @@ currentWeapon = weaponList[0]
 
 frameCount = 0
 
-#Find NPCs in level data
-npcList = NPC.findNPC(mapLevel)
+#Define sensitivity
+sensitivity = 0.008
 
 #Set cursor to invisible
 pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
@@ -52,8 +58,6 @@ while True:
 
 	#Update NPCs
 	for i in range(0,len(npcList)):
-		print("i: " + str(i))
-		print(len(npcList))
 		if npcList[i].walk(player, mapLevel, npcList):
 
 			#cull the npc if it true
@@ -65,6 +69,7 @@ while True:
 
 	#Cycle through each event that occurs in a frame
 	for event in pygame.event.get():
+
 		#Make sure we can exit the window
 		if event.type == pygame.QUIT:
 			pygame.quit()
@@ -89,7 +94,7 @@ while True:
 
 		#Move mouse and adjust camera angle accordingly
 		elif event.type == MOUSEMOTION:
-			player.angle -= (width / 2 - pygame.mouse.get_pos()[0]) / (width * 1)
+			player.angle -= (width / 2 - pygame.mouse.get_pos()[0]) / (width * (1 / sensitivity))
 
 			pygame.mouse.set_pos(width / 2, height / 2)
 		
@@ -98,7 +103,6 @@ while True:
 			mouseAction = pygame.mouse.get_pressed()
 			if mouseAction[0]:
 				currentWeapon.Shoot(player, npcList, mapLevel, frameCount)
-
 
 	#Animate weapon
 	currentWeapon.Animate(frameCount)
@@ -109,5 +113,4 @@ while True:
 	#Draw minimap
 	drawOverlay(player, npcList, mapLevel)
 
-	pygame.display.flip() 
-	pygame.display.update()
+	pygame.display.flip()

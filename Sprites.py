@@ -20,6 +20,12 @@ def createSpriteList():
 		11 : pygame.image.load("assets/walls/uglywallpainting2.png"),
 		12 : pygame.image.load("assets/walls/woodpainting1.png"),
 		13 : pygame.image.load("assets/walls/woodpainting2.png"),
+		
+		#Pointers for HIRs mapping
+		996 : pygame.image.load("assets/system/pointer_hall.png"),
+		997 : pygame.image.load("assets/system/pointer_room.png"),
+		998 : pygame.image.load("assets/system/pointer_intersection.png"),
+		999 : pygame.image.load("assets/system/pointer.png"),
 
 		#Object Sprites
 		1000 : pygame.image.load("assets/object/barrel.png"),
@@ -34,13 +40,15 @@ def createSpriteList():
 		3000 : pygame.image.load("assets/npc/dead/enemy_dead.png"),
 		3001 : pygame.image.load("assets/npc/dead/npc1.png"),
 
-		#Pickups
+		#Pickup Sprites
 		4000 : pygame.image.load("assets/pickup/health_pickup.png"),
 		4001 : pygame.image.load("assets/pickup/ammo_pickup.png"),
 		4002 : pygame.image.load("assets/pickup/ammo_drop.png"),
+
 	}
 	return spriteList
 
+#Create spritelist used for rendering weapons
 def createWeapSpriteList(width, height):
 	spriteList = {
 		#Weapons sorted by ID
@@ -52,6 +60,7 @@ def createWeapSpriteList(width, height):
 			spriteList[list(spriteList.keys())[i]][n] = pygame.transform.scale(spriteList[list(spriteList.keys())[i]][n], (width, height))
 	return spriteList
 
+#Create texture list for the "flash" when a gun is fired
 def createBoomList(width, height):
 	spriteList = [
 		#3 Frame long blast when weapon is fired
@@ -63,6 +72,7 @@ def createBoomList(width, height):
 		spriteList[i] = pygame.transform.scale(spriteList[i], (width, height))
 	return spriteList
 
+#Create font used to show ammo count and hp
 def createFont(width, height):
 	spriteList = [
 		pygame.image.load("assets/system/font/0.png"),

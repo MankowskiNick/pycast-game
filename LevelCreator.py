@@ -174,9 +174,9 @@ def Main(px, py, currentMap, npcList):
 
     pygame.init()
 
-    size = width, height = (800,600)
+    width, height = (1200,900)
 
-    screen = pygame.display.set_mode(size)
+    screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Map Generator")
 
     #Create new font for rendering textboxes
@@ -203,6 +203,10 @@ def Main(px, py, currentMap, npcList):
 
     #Define the block size used in the renderer
     blockSize = getBlocksize(mapWidth, mapHeight, width, height)
+
+    #Resize sprites to blocksize
+    for i in range(0,len(spriteLookUpTable)):
+        mapSpriteList[spriteLookUpTable[i]] = pygame.transform.scale(mapSpriteList[spriteLookUpTable[i]],(blockSize, blockSize))
 
     #Create text box things
     currentlyTyping = False
