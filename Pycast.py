@@ -22,7 +22,7 @@ player = Camera.Camera(Format.findPlayer(mapLevel), 0)
 
 #Create a HIRs of the level
 levelHIR= HIRs.HIRs(mapLevel)
-mapLevel = levelHIR.level
+#mapLevel = levelHIR.level #TEMP - show markers from HIRs
 
 #Create all sprite lists used by program
 spriteList = createSpriteList()
@@ -49,6 +49,8 @@ sensitivity = 0.008
 #Set cursor to invisible
 pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 
+#print("Path from (15, 15) to player: ", str(levelHIR.generateRoomPath(15, 15, player, [])[0]))
+levelHIR.pathfind(npcList[55], player, mapLevel)
 while True:
 	frameCount+=1
 
