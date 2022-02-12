@@ -14,8 +14,8 @@ blue = (0,0,255)
 brown = (235, 143, 52)
 
 #Define screen size
-width = 1200
-height = 900
+width = 800
+height = 600
 size = (width, height)
 
 #Size Modifier, how large should the final image be rendered?
@@ -433,7 +433,8 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level):
 		pygame.draw.circle(screen, (0,255,0), (drawVect[i][0].x * blockSize, drawVect[i][0].y * blockSize), 5)
 		drawSize = sizeModifier / drawVect[i][1]
 		sprite = spriteList[drawVect[i][0].type]
-		sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
+		if drawSize < height:
+			sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
 		xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
 		xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
 		xPos = (xDisp / xRange) * width

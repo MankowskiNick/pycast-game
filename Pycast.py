@@ -21,8 +21,9 @@ del tmp1, tmp2, tmp3
 player = Camera.Camera(Format.findPlayer(mapLevel), 0)
 
 #Create a HIRs of the level
-levelHIR= HIRs.HIRs(mapLevel)
-#mapLevel = levelHIR.level #TEMP - show markers from HIRs
+levelHIR= NPC.HIRs(mapLevel)
+for i in range(0,len(npcList)):
+	npcList[i].giveHIR(levelHIR, player, mapLevel)
 
 #Create all sprite lists used by program
 spriteList = createSpriteList()
@@ -44,14 +45,17 @@ currentWeapon = weaponList[0]
 frameCount = 0
 
 #Define sensitivity
-sensitivity = 0.008
+sensitivity = 0.8
 
 #Set cursor to invisible
 pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 
-#print("Path from (15, 15) to player: ", str(levelHIR.generateRoomPath(15, 15, player, [])[0]))
-levelHIR.pathfind(npcList[55], player, mapLevel)
+
+n = 68
+#print(npcList[n].coords)
+#levelHIR.pathfind(npcList[n], player, mapLevel)
 while True:
+
 	frameCount+=1
 
 	#Set framerate
@@ -60,7 +64,7 @@ while True:
 
 	#Update NPCs
 	for i in range(0,len(npcList)):
-		if npcList[i].walk(player, mapLevel, npcList):
+		if npcList[i].walk(player, mapLevel, npcList, frameCount):
 
 			#cull the npc if it true
 			npcList.pop(i)
@@ -115,4 +119,5 @@ while True:
 	#Draw minimap
 	drawOverlay(player, npcList, mapLevel)
 
+	#Update
 	pygame.display.flip()
