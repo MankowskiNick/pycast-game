@@ -13,6 +13,8 @@ red = (255,0,0)
 blue = (0,0,255)
 brown = (235, 143, 52)
 
+drawMinimap = False
+
 #Define screen size
 width = 800
 height = 600
@@ -75,20 +77,22 @@ def Sort(vect):
 
 #playerX, playerY, playerAngle, level as inputs
 def drawOverlay(player, npcList, drawMap):
-	px, py, angle = player.x, player.y, player.angle
-	for x in range(0,len(drawMap[0])):
-		for y in range(0,len(drawMap)):
-			if (drawMap[y][x] > 0 and drawMap[y][x] <= 999):
-				pygame.draw.rect(screen, black, pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize))
-			#elif  (drawMap[y][x] > 999):
-				#pygame.draw.circle(screen, black, (x * blockSize + blockSize / 2, y * blockSize + blockSize / 2), blockSize / 2)
-			else:
-				pygame.draw.rect(screen, white, pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
-	for i in range(0,len(npcList)):
-		pygame.draw.circle(screen, blue,(npcList[i].x * blockSize, npcList[i].y * blockSize), 3)
 
-	pygame.draw.circle(screen, black,(px * blockSize, py * blockSize), 3)
-	pygame.draw.line(screen, black, (px * blockSize, py * blockSize), (px * blockSize + 8 * math.cos(angle), py * blockSize + 8 * math.sin(angle)))
+	px, py, angle = player.x, player.y, player.angle
+	if drawMinimap:
+		for x in range(0,len(drawMap[0])):
+			for y in range(0,len(drawMap)):
+				if (drawMap[y][x] > 0 and drawMap[y][x] <= 999):
+					pygame.draw.rect(screen, black, pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize))
+				#elif  (drawMap[y][x] > 999):
+					#pygame.draw.circle(screen, black, (x * blockSize + blockSize / 2, y * blockSize + blockSize / 2), blockSize / 2)
+				else:
+					pygame.draw.rect(screen, white, pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
+		for i in range(0,len(npcList)):
+			pygame.draw.circle(screen, blue,(npcList[i].x * blockSize, npcList[i].y * blockSize), 3)
+
+		pygame.draw.circle(screen, black,(px * blockSize, py * blockSize), 3)
+		pygame.draw.line(screen, black, (px * blockSize, py * blockSize), (px * blockSize + 8 * math.cos(angle), py * blockSize + 8 * math.sin(angle)))
 
 
 	#Display FPS on Screen

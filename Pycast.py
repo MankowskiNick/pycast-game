@@ -121,7 +121,7 @@ while True:
 	Render.renderScene(player,  mapLevel, npcList, spriteList, currentWeapon, frameCount, font, doors)
 
 	#Draw minimap
-	#drawOverlay(player, npcList, mapLevel)
+	drawOverlay(player, npcList, mapLevel)
 
 	#Update
 	pygame.display.flip()
