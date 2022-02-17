@@ -1,4 +1,11 @@
 import math, NPC
+
+def getDoor(doors, coords):
+	for i in range(0, len(doors)):
+		if math.sqrt(pow(doors[i].x + 0.5 - coords[0], 2) + pow(doors[i].y + 0.5 - coords[1], 2)) <= 0.5:
+			return i
+	return 0
+
 class Weapon:
     def __init__(self, id, dmg, rng, sprd, ammoID, sprite, boomList):
         self.id = id
@@ -44,13 +51,14 @@ class Weapon:
 
 
     #Raycast check wall(simple, not a lot of checks)
-    def checkWallDist(self, px, py, angle,level):
+    def checkWallDist(self, px, py, angle, level, doors):
         x, y = px, py
         stepSize = 0.01
         while True:
             x += stepSize * math.cos(angle)
             y += stepSize * math.sin(angle)
-            if (level[int(y)][int(x)] < 900 and level[int(y)][int(x)] > 0):
+            doorID = getDoor(doors, [x, y])
+            if (level[int(y)][int(x)] <= 899 and level[int(y)][int(x)] > 0) or (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
                 return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
 
     def Animate(self, frameCount):
@@ -73,7 +81,7 @@ class Weapon:
         self.yOffset = 0
         self.currrentSprite = self.sprite[0]
 
-    def Shoot(self, player, npcList, level, shotFrame):
+    def Shoot(self, player, npcList, level, shotFrame, doors):
         #Verify that the player has ammo
         if player.ammoCount[self.ammoID] <= 0:
             return
@@ -117,7 +125,7 @@ class Weapon:
                         
                         #Calculate obj dist and the distance to the nearest wall
                         distToObj = math.sqrt(pow(npcList[i].x - x, 2) + pow(npcList[i].y - y, 2))
-                        distToWall = self.checkWallDist(x, y, objAngleFromOrig, level)
+                        distToWall = self.checkWallDist(x, y, objAngleFromOrig, level, doors)
 
                         #If the object is closer than the nearest wall, add to draw vector
                         if distToWall > distToObj:

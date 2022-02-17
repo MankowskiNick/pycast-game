@@ -174,7 +174,7 @@ def Main(px, py, currentMap, npcList):
 
     pygame.init()
 
-    width, height = (1200,900)
+    width, height = (800, 600)
 
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Map Generator")

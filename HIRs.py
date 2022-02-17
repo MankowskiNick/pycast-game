@@ -1,4 +1,4 @@
-import sys
+import sys, pdb
 class HIRs:
     def __init__(self, level):
         #hallwayCount = 0
@@ -9,6 +9,8 @@ class HIRs:
         self.halls = []
 
         self.level = level
+
+        self.path = []
 
         levelWidth = len(self.level[0])
         levelHeight = len(self.level)
@@ -214,71 +216,60 @@ class HIRs:
                     return room.id 
 
     def pathfind(self, enemy, player, level):
-        roomPath = self.generateRoomPath(enemy.coords, player, [])[0]
-        print(roomPath)
-        if len(roomPath) == 1:
-            maze = self.getMaze((enemy.x, enemy.y), roomPath[0], roomPath[0])
-        else:
-            maze = self.getMaze((enemy.x, enemy.y), roomPath[0], roomPath[0])
-            #maze += self.getMaze((8, 6), 1, 0)
-            #print(self.rooms[roomPath[1-1]].getIntersectionCoords(roomPath[2-1]))
-        if len(roomPath) > 1:
-            for i in range(2,len(roomPath)):
-                maze += self.getMaze(self.rooms[roomPath[i-2]].getIntersectionCoords(roomPath[i-1]), roomPath[i-1], roomPath[i])
-            #print(maze)
+        roomPath = [self.getRoom(enemy.coords[0], enemy.coords[1])]
+        tmp, tmpRoomPath = self.generateRoomPath(enemy.coords, player, [])
+        roomPath += tmpRoomPath
 
+        #print(roomPath)
+        if (len(roomPath) > 1):
+            phantomList = self.getMaze(roomPath, 1, [[self.rooms[roomPath[0]].getIntersectionCoords(self.rooms[roomPath[1]].id)[0], self.rooms[roomPath[0]].getIntersectionCoords(self.rooms[roomPath[1]].id)[1]]])
+        #for i in self.phantomList:
+        #    self.level[i[1]][i[0]] = 999
+
+        return phantomList
+            
 
     #Generate a path of rooms to go to
     def generateRoomPath(self, coords, player, path):
-        #print(self.getRoom(player.x, player.y))
         playerRoom = self.getRoom(player.x, player.y)
         enemyRoom = self.getRoom(coords[0], coords[1])
-        print("Player room: ", str(playerRoom))
-        print("Enemy room: ", str(enemyRoom))
-
-        path.append(enemyRoom)
-
-        #Base case
-        if playerRoom == enemyRoom:
-            #path.append(enemyRoom)
-            return path, True
-        #Recursive case
+        if (playerRoom == enemyRoom):
+            return True, path
         else:
-            for possibleRoom in self.rooms[enemyRoom].connections:
-                print("Possible options: ", str(self.rooms[enemyRoom].connections))
-                print("Setting up coords (", str(self.rooms[possibleRoom].coords[0]), ",", str(self.rooms[possibleRoom].coords[1]), ")")
-                path, result = self.generateRoomPath(self.rooms[possibleRoom].coords, player, path)
+            for room in self.rooms[enemyRoom].connections:
+                for checkRoom in path:
+                    if checkRoom == room:
+                        return False, path
+                path.append(room)
+                result, tmpPath = self.generateRoomPath(self.rooms[room].coords, player, path)
                 if result:
-                    #path.append(possibleRoom)
-                    break
-            return path, result
+                    path = tmpPath
+                    return True, path
+                else:
+                    path.remove(room)
+        return False, path
 
+    def getMaze(self, roomPath, pos, phantomList):
+        resolution = 3
+        if (pos == len(roomPath)):
+            return phantomList
+        else:
+            if (pos + 1 < len(roomPath)):
+                coord1 = self.rooms[roomPath[pos - 1]].getIntersectionCoords(roomPath[pos])
+                coord2 = self.rooms[roomPath[pos]].getIntersectionCoords(roomPath[pos + 1])
 
-    #fix this lol
-    def getMaze(self, startCoords, startRoom, endRoom):
-        resolution = 50
-        maze = [[int(startCoords[0]), int(startCoords[1])]]
-        print("StartRoom: ", str(startRoom))
-        print("EndRoom: ", str(endRoom))
-        print("StartCoords: ", str(startCoords))
-        targetX, targetY = self.rooms[startRoom].getIntersectionCoords(endRoom)[0], self.rooms[startRoom].getIntersectionCoords(endRoom)[1]
-        currentX, currentY = startCoords
-        startX, startY = startCoords
-        stepX, stepY = (targetX - startX) / resolution, (targetY - startY) / resolution
-        for i in range(0,resolution):
-            present = False
-            for coord in maze:
-                if coord == [int(currentX), int(currentY)]:
-                    present = True
-            if not present:
-                for i in range(-1,2):
-                    for j in range(-1, 2):
-                        if (self.level[int(currentY) + j][int(currentX) + i] == 0) or (self.level[int(currentY) + j][int(currentX) + i] >= 2000) or (self.level[int(currentY) + j][int(currentX) + i] == 999): 
-                            maze.append([int(currentX) + i, int(currentY) + j])
-                            self.level[int(currentY) + j][int(currentX) + i] = 999
-            currentX += stepX
-            currentY += stepY
-        return maze
+                #print(coord1, coord2)
+                currentX, currentY = coord1[0], coord1[1]
+                stepX, stepY = (coord2[0] - coord1[0]) / resolution, (coord2[1] - coord1[1]) / resolution
+                for i in range(0,resolution):
+                    currentX += stepX
+                    currentY += stepY
+                    if (self.level[int(currentY)][int(currentX)] == 0 or self.level[int(currentY)][int(currentX)] >= 2000):
+                        #self.level[int(currentY)][int(currentX)] = 999
+                        #phantomList.append(Phantom(int(currentX), int(currentY)))
+                        phantomList.append([int(currentX), int(currentY)])
+
+            return self.getMaze(roomPath, pos + 1, phantomList)
                   
 class Room:
     #Coordinates are a list given in terms of the top left tile, size is a list in terms of [width, height]
@@ -298,4 +289,4 @@ class Room:
         for i in range(0,len(self.connections)):
             if self.connections[i] == searchTerm:
                 return self.intersectionCoords[i]
-        return self.coords
+        return [0,0]

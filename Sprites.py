@@ -20,6 +20,9 @@ def createSpriteList():
 		11 : pygame.image.load("assets/walls/uglywallpainting2.png"),
 		12 : pygame.image.load("assets/walls/woodpainting1.png"),
 		13 : pygame.image.load("assets/walls/woodpainting2.png"),
+
+		#Doors
+		900 : pygame.image.load("assets/doors/door1.png"),
 		
 		#Pointers for HIRs mapping
 		996 : pygame.image.load("assets/system/pointer_hall.png"),

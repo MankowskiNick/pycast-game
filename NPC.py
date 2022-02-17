@@ -14,6 +14,12 @@ def findNPC(focusMap):
 				continue
 	return npcList
 
+def getDoor(doors, coords):
+	for i in range(0, len(doors)):
+		if math.sqrt(pow(doors[i].x + 0.5 - coords[0], 2) + pow(doors[i].y + 0.5 - coords[1], 2)) <= 0.5:
+			return i
+	return 0
+
 class NPC:
 	def __init__(self, coords, type, label, hp):
 		
@@ -49,7 +55,7 @@ class NPC:
 		self.label = label
 
 		#Define step size
-		self.stepSize = 0.01
+		self.stepSize = 0.03
 
 		self.xDisp = 0
 		self.yDisp = 0
@@ -60,29 +66,33 @@ class NPC:
 		self.pathPos = 0
 
 		#Define npc as not active, npc hasnt been seen
+		#self.setActive()
 		self.deActivate()
 
 		#stored as [[x0,x1],[y0,y1]]
 		self.updateHitBox()
 
-	def walk(self, player, level, npcList, frameCount):
+	def walk(self, player, level, npcList, doors, frameCount):
 		self.coords = self.x, self.y
-		if len(self.path) > 0:# and self.pathPos < len(self.path):
+		xDist = 1
+		yDist = 1
+		if len(self.path) > 0 and self.pathPos < len(self.path):
 			xDist = self.path[self.pathPos][0] - self.x + 0.5
 			yDist = self.path[self.pathPos][1] - self.y + 0.5
 		else:
 			xDist = player.x - self.x
 			yDist = player.y - self.y
+		distToPlayer = math.sqrt(pow(player.x - self.x, 2) + pow(player.y - self.y, 2))
 		distTo = math.sqrt(pow(xDist, 2) + pow(yDist, 2))
-		if (self.isActive and (not self.isObject) and self.isAlive):
+		if (self.isActive and (not self.isObject) and self.isAlive and distToPlayer > 0.5):
 			
 			#add counter and give like 5 frames before we can recount
 			if (frameCount % len(npcList) == self.label and frameCount > self.frameCounter):
-				self.frameCounter = frameCount + 50
+				self.frameCounter = frameCount + 100
 			if frameCount >= self.frameCounter:
 				if not self.HIR.getRoom(player.x, player.y) == self.HIR.getRoom(self.x, self.y):
 					self.path = self.HIR.pathfind(self, player, level)
-					#self.pathPos = 0
+					self.pathPos = 0
 				else:
 					self.path = []
 					self.pathPos = 0
@@ -91,11 +101,9 @@ class NPC:
 
 			self.xDisp = self.stepSize * xDist / distTo
 			self.yDisp = self.stepSize * yDist / distTo
-			#print(self.path)
-			#print(self.pathPos, distTo)
 			activateDist = 0.5
-			tolerance = 0.05
-			if (not self.wallDetect(level) and self.npcDetect(npcList) == False and distTo > activateDist):# and tolerance > activateDist - distTo):
+
+			if (not self.wallDetect(level, doors) and self.npcDetect(npcList) == False and distTo > activateDist):
 				self.x += self.xDisp
 				self.y += self.yDisp
 			if (distTo < activateDist):
@@ -105,21 +113,21 @@ class NPC:
 				
 			self.updateHitBox()
 
-		if (not self.isObject and not self.isAlive and self.type >= 4000):
-			if distTo < 0.3:
+		if (self.type >= 4000):
+			distTo = math.sqrt(pow(player.x - self.x, 2) + pow(player.y - self.y, 2))
+			if distTo < 0.5:
 				self.activate(player)
 				return True
 		return False
 
-	#rewrite this
-	def wallDetect(self, level):
-		if (level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] > 0):
-			if (level[int(self.y)][int(self.x + self.xDisp)] == 0):
+	def wallDetect(self, level, doors):
+		doorID = getDoor(doors, [self.x, self.y])
+        
+		if (level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] > 0 and level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] <= 899) or (level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] > 899 and level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] <= 999 and (not doors[doorID].isOpen) and (not doorID == 0)):
+			if (level[int(self.y)][int(self.x + self.xDisp)] == 0) or (level[int(self.y)][int(self.x + self.xDisp)] > 899 and level[int(self.y)][int(self.x + self.xDisp)] <= 999 and (doors[doorID].isOpen) and (not doorID == 0)):
 				self.yDisp = 0
-			elif (level[int(self.y + self.yDisp)][int(self.x)] == 0):
+			if (level[int(self.y + self.yDisp)][int(self.x)] == 0) or (level[int(self.y + self.yDisp)][int(self.x)] > 899 and level[int(self.y + self.yDisp)][int(self.x)] <= 999 and (doors[doorID].isOpen) and (not doorID == 0)):
 				self.xDisp = 0
-			#else:
-				#return True
 			return False
 		return False
 
@@ -175,7 +183,8 @@ class NPC:
 		self.HIR = HIR
 		self.path = self.HIR.pathfind(self, player, level)
 		self.pathPos = 0
-	#In the event the self object is a picup, activate whatever it is intended to do.
+	
+	#In the event the self object is a pickup, activate whatever it is intended to do.
 	def activate(self, player):
 		if self.type < 4000:
 			return
@@ -215,7 +224,7 @@ class HIRs:
                     if coords == [x,y]:
                         alreadyChecked = True
 
-                if not alreadyChecked and (level[y][x] == 0 or level[y][x] >= 1000):
+                if not alreadyChecked and (level[y][x] == 0 or level[y][x] > 999):
                     print("New space found.  Starting coords: ", str((x,y)), " Level value: ", str(level[y][x]))
                     doneExpanding = False
                     currentBox = [x,y]
@@ -311,7 +320,7 @@ class HIRs:
                     x = i + box[0]
                     y = j + box[1]
                     checkedCoords.append([x, y])
-                    if level[y][x] > 0 and level[y][x] < 1000:
+                    if level[y][x] > 0 and level[y][x] <= 899:
                         boxSuccess = False
                     else:
                         level[y][x] == 5
@@ -330,7 +339,7 @@ class HIRs:
                     x = i + box[0]
                     y = j + box[1]
                     checkedCoords.append([x, y])
-                    if level[y][x] > 0 and level[y][x] < 1000:
+                    if level[y][x] > 0 and level[y][x] <= 899:
                         boxSuccess = False
                     else:
                         level[y][x] == 5
@@ -362,7 +371,7 @@ class HIRs:
         #Check perimeters
         for i in range(0, len(room1.perimeterCoords)):
             for j in range(0, len(room2.perimeterCoords)):
-                if (room1.perimeterCoords[i] == room2.perimeterCoords[j] and level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] == 0):
+                if (room1.perimeterCoords[i] == room2.perimeterCoords[j] and ((level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] == 0) or (level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] > 899 and level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] <= 999))):
                     intersectionPoints.append(room1.perimeterCoords[i])
         
         #Check interior points

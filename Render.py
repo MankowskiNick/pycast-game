@@ -93,9 +93,15 @@ def drawOverlay(player, npcList, drawMap):
 
 	#Display FPS on Screen
 	fps = font.render(str(int(clock.get_fps())) + " FPS (" + str(px) + " , " + str(py) + ")", True, white)
-	screen.blit(fps, (0, height - 50))
+	screen.blit(fps, (0, height - 150))
 
-def castRay(px, py, angle, currentLevel, spriteList):
+def getDoor(doors, coords):
+	for i in range(0, len(doors)):
+		if math.sqrt(pow(doors[i].x + 0.5 - coords[0], 2) + pow(doors[i].y + 0.5 - coords[1], 2)) <= 1:
+			return i
+	return 0
+
+def castRay(px, py, angle, currentLevel, spriteList, doors):
 
 	#Define ray width
 	rayWidth = fov / width
@@ -173,12 +179,32 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		#Player looking up
 		elif rayAng >= math.pi:
 			#Collision? If yes, break loop and have distance value set
-			if (currentLevel[int(y-1)][int(x)] > 0 and currentLevel[int(y-1)][int(x)] <= 999):
+			if (currentLevel[int(y-1)][int(x)] > 0 and currentLevel[int(y-1)][int(x)] <= 899):
 				hx = x
 				hy = y-1
 
 				horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 				horizCollision = True
+			
+			#DOOR CHECK
+			elif (currentLevel[int(y-1)][int(x)] > 899 and currentLevel[int(y-1)][int(x)] <= 999):
+				
+				currentTile = currentLevel[int(y-1)][int(x)]
+
+				doorID = getDoor(doors, [int(x), int(y-1)])
+	
+				if int(y + 0.5*dY) < len(currentLevel) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(currentLevel) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:				
+					if (currentLevel[int(y - 1 - 0.5*dY)][int(x + 0.5*dX + doors[doorID].offset)] == currentTile):
+						hx = x + 0.5*dX + doors[doorID].offset
+						hy = y - 1 - 0.5*dY
+						horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
+						horizCollision = True
+					else:
+						x += dX
+						y += dY
+				else:
+					x += dX
+					y += dY
 
 			#Otherwise, keep incrementing
 			else:	
@@ -188,12 +214,32 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		#Camera looking down
 		elif rayAng < math.pi:
 			#Collision? If yes, break loop and have distance value set
-			if (currentLevel[int(y)][int(x)] > 0 and currentLevel[int(y)][int(x)] <= 999):
+			if (currentLevel[int(y)][int(x)] > 0 and currentLevel[int(y)][int(x)] <= 899):
 				hx = x
 				hy = y
 
 				horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 				horizCollision = True
+
+			#DOOR CHECK
+			elif (currentLevel[int(y)][int(x)] > 899 and currentLevel[int(y)][int(x)] <= 999):
+				
+				currentTile = currentLevel[int(y)][int(x)]
+
+				doorID = getDoor(doors, [int(x), int(y)])
+				
+				if int(y + 0.5*dY) < len(currentLevel) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(currentLevel) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+					if (currentLevel[int(y + 0.5*dY)][int(x + 0.5*dX + doors[doorID].offset)] == currentTile):
+						hx = x + 0.5*dX + doors[doorID].offset
+						hy = y + 0.5*dY
+						horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
+						horizCollision = True
+					else:
+						x += dX
+						y += dY
+				else:
+					x += dX
+					y += dY
 
 			#Otherwise, keep incrementing
 			else:	
@@ -249,12 +295,32 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		#Player looking left
 		elif rayAng >= math.pi / 2 and rayAng <= math.pi * 3/2:
 			#Collision? If yes, break loop and have distance value set
-			if (currentLevel[int(y)][int(x-1)] > 0 and currentLevel[int(y)][int(x-1)] <= 999):
+			if (currentLevel[int(y)][int(x-1)] > 0 and currentLevel[int(y)][int(x-1)] <= 899):
 				vx = x-1
 				vy = y
 
 				vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 				vertCollision = True
+			
+			#DOOR CHECK
+			elif (currentLevel[int(y)][int(x-1)] > 899 and currentLevel[int(y)][int(x-1)] <= 999):
+				
+				currentTile = currentLevel[int(y)][int(x-1)]
+
+				doorID = getDoor(doors, [int(x), int(y)])
+				
+				if int(y + 0.5*dY) < len(currentLevel) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(currentLevel) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+					if (currentLevel[int(y + 0.5*dY + doors[doorID].offset)][int(x - 1 - 0.5*dX)] == currentTile):
+						vx = x - 1 - 0.5*dX
+						vy = y + 0.5*dY + doors[doorID].offset
+						vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
+						vertCollision = True
+					else:
+						x += dX
+						y += dY
+				else:
+					x += dX
+					y += dY
 
 			#Otherwise, continue incrementing
 			else:	
@@ -264,12 +330,32 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		#Player looking right
 		elif rayAng > math.pi * 3/2 or rayAng < math.pi / 2:
 			#Collision? If yes, break loop and have distance value set
-			if (currentLevel[int(y)][int(x)] > 0 and currentLevel[int(y)][int(x)] <= 999):
+			if (currentLevel[int(y)][int(x)] > 0 and currentLevel[int(y)][int(x)] <= 899):
 				vx = x
 				vy = y
 
 				vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 				vertCollision = True
+						
+			#DOOR CHECK
+			elif (currentLevel[int(y)][int(x)] > 899 and currentLevel[int(y)][int(x)] <= 999):
+				
+				currentTile = currentLevel[int(y)][int(x)]
+
+				doorID = getDoor(doors, [int(x), int(y)])
+				
+				if int(y + 0.5*dY) < len(currentLevel) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(currentLevel) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+					if (currentLevel[int(y + 0.5*dY + doors[doorID].offset)][int(x + 0.5*dX)] == currentTile):
+						vx = x + 0.5*dX
+						vy = y + 0.5*dY + doors[doorID].offset
+						vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
+						vertCollision = True
+					else:
+						x += dX
+						y += dY
+				else:
+					x += dX
+					y += dY
 
 			#Otherwise, keep incrementing
 			else:	
@@ -298,7 +384,7 @@ def castRay(px, py, angle, currentLevel, spriteList):
 		pixelOffset = (spriteDimension * (ty - int(ty)))
 
 	#Draws the FOV of the player in red
-	pygame.draw.line(screen, red, (px * blockSize, py * blockSize), (blockSize * (px + drawDist*math.cos(rayAng)), blockSize * (py + drawDist*math.sin(rayAng))))
+	#pygame.draw.line(screen, red, (px * blockSize, py * blockSize), (blockSize * (px + drawDist*math.cos(rayAng)), blockSize * (py + drawDist*math.sin(rayAng))))
 
 	#Define what sprite will be our reference to render
 	if (currentLevel[int(ty)][int(tx)] > 0):
@@ -313,82 +399,24 @@ def castRay(px, py, angle, currentLevel, spriteList):
 	else:
 		return 0, wallTexture
 
-#Separate, less effecient, algorithm to raycast NPCs onto the screen, we can't just test @ integer steps
-#for these dudes because they can have non integer coordinates
-#12/19 - DEPRACATED
-def castNPC(px, py, angle, npcList, currentLevel, shot):
-
-
-	#Define step size
-	step = 0.05
-
-	#Starting from dist of 0
-	npcDist = 0.0
-	
-	#Define starting coords
-	x = px
-	y = py
-
-	#Create appropriately sized list of NPCs to render on screen
-	renderList = []
-	for i in range(0,len(npcList)):
-		renderList.append([1,0])
-
-	#Create container that allows us to ensure we only draw each NPC once
-	hitCurrent = []
-	for i in range(0,len(npcList)):
-		hitCurrent.append(False)
-
-	#We should only check the objects that are close to us
-	
-	checkList = []
-	for i in range(0,len(npcList)):
-		######abs(math.atan((npcList[i].y - y) / (npcList[i].x - x)) - angle) <= fov / 2
-		checkAngle = abs(math.atan((npcList[i].y - y) / (npcList[i].x - x))) - angle
-		if abs(checkAngle <= fov / 2): 
-			checkList.append(npcList[i])
-
-	while (True):
-		x += step * math.cos(angle)
-		y += step * math.sin(angle)
-
-		npcDist += step
-		for i in range(0,len(checkList)):
-			
-			currentHitBox = checkList[i].hitBox
-
-			minX = currentHitBox[0][0]
-			maxX = currentHitBox[0][1]
-
-			minY = currentHitBox[1][0]
-			maxY = currentHitBox[1][1]
-
-			if ((x >= minX and x <= maxX and y >= minY and y <= maxY) and hitCurrent[i] == False):
-
-				#Indicate that the NPC can chase the player
-				checkList[i].setActive()
-
-				#Add npc to render list
-				renderList[i] = [npcDist, checkList[i].type]
-				hitCurrent[i] = True
-
-			elif (hitCurrent):
-				hitCurrent[i] = False
-
-		if (npcDist > npcRenderDist):
-			return renderList
-
 #Raycast check wall(simple, not a lot of checks)
-def checkWallDist(px, py, angle,level):
+def checkWallDist(px, py, angle, level, doors):
 	x, y = px, py
 	stepSize = 0.01
 	while True:
 		x += stepSize * math.cos(angle)
 		y += stepSize * math.sin(angle)
-		if (level[int(y)][int(x)] < 999 and level[int(y)][int(x)] > 0):
-			return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
 
-def drawObj(screen, x, y, angle, npcList, spriteList, level):
+		#doorID = getDoor(doors, [x, y])
+		if (level[int(y)][int(x)] < 899 and level[int(y)][int(x)] > 0):# or (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
+			return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
+		if (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999):
+			doorID = getDoor(doors, [x, y])
+			if (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
+				return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
+
+
+def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 	#Create empty list of objects to draw
 	drawVect = []
 	
@@ -418,7 +446,7 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level):
 			
 			#Calculate obj dist and the distance to the nearest wall
 			distToObj = math.sqrt(pow(npcList[i].x - x, 2) + pow(npcList[i].y - y, 2))
-			distToWall = checkWallDist(x, y, objAngleFromOrig, level)
+			distToWall = checkWallDist(x, y, objAngleFromOrig, level, doors)
 
 			#If the object is closer than the nearest wall, add to draw vector
 			if distToWall > distToObj:
@@ -430,18 +458,20 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level):
 
 	#Render them in order from furthest to closest, closest being draw on top
 	for i in range(len(drawVect) - 1, -1, -1):
-		pygame.draw.circle(screen, (0,255,0), (drawVect[i][0].x * blockSize, drawVect[i][0].y * blockSize), 5)
+		#pygame.draw.circle(screen, (0,255,0), (drawVect[i][0].x * blockSize, drawVect[i][0].y * blockSize), 5)
 		drawSize = sizeModifier / drawVect[i][1]
 		sprite = spriteList[drawVect[i][0].type]
-		if drawSize < height:
+
+		#testing to see if this works? weird error sometimes
+		if True:#drawSize <= height:
 			sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
-		xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
-		xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
-		xPos = (xDisp / xRange) * width
-		screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
+			xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
+			xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
+			xPos = (xDisp / xRange) * width
+			screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
 
 #Render the scene given the player coords & level
-def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font):
+def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font, doors):
     #Draw background, ceiling and wall split in to two parts
     pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
     pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))
@@ -458,7 +488,7 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
             currentAngle += 2 * math.pi
 
         #Define column length so that out draw function looks better
-        enviroRenderOutput = castRay(player.x, player.y, currentAngle, currentLevel, spriteList)
+        enviroRenderOutput = castRay(player.x, player.y, currentAngle, currentLevel, spriteList, doors)
 
         #Disassemble output tuple
         columnLength, textureColumn = enviroRenderOutput
@@ -467,7 +497,7 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
         screen.blit(textureColumn, (i * rayPixelWidth, (height / 2) - (columnLength / 2)))
 
     #Render sprites and npcs
-    drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, currentLevel)
+    drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, currentLevel, doors)
 
     #Render smoke cloud from barrel
     if frameCount - currentWeapon.shotFrame <= 2 and frameCount - currentWeapon.shotFrame >= 0:
@@ -490,6 +520,3 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
     screen.blit(font[ammoCountList[0]], (width - (7 * UI_scaleX), height - (4 * UI_scaleY)))
     screen.blit(font[ammoCountList[1]], (width - (5 * UI_scaleX), height - (4 * UI_scaleY)))
     screen.blit(font[ammoCountList[2]], (width - (3 * UI_scaleX), height - (4 * UI_scaleY)))
-
-
-	
