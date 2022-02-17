@@ -6,7 +6,7 @@ from pygame.locals import *
 import Render, Format, Camera, NPC, LevelCreator, Sprites, Weapon, Door
 from Global import *
 from Render import *
-from Format import *
+#from Format import *
 from Sprites import *
 from Weapon import *
 
@@ -14,7 +14,7 @@ from Weapon import *
 pygame.init()
 
 #Load map and NPC list
-mapLevel, npcList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/testlevel.leveldata")
+mapLevel, npcList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/level.leveldata")
 del tmp1, tmp2, tmp3
 
 #Load in doors
