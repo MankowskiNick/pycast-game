@@ -5,7 +5,7 @@ Raycasting engine written in Python with the Pygame library.
 ### 1/xx
 +Fixed bugs  
 +Changed system for loading levels, cutting reliance on LevelData.py and Map.py
-+Added hallway mapping to assist enemy pathfinding
++Added hallway mapping to assist enemy pathfinding  
 +Added HIRs mapping, creating a graph of the map to aid in pathfinding speed  
 +Added AI pathfinding  
 +Added weapons for AI enemies  
