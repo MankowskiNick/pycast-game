@@ -13,24 +13,30 @@ red = (255,0,0)
 blue = (0,0,255)
 brown = (235, 143, 52)
 
-drawMinimap = True
+#Should we draw the minimap?
+drawMinimap = False
 
 #Define screen size
 width = 800
 height = 600
-size = (width, height)
-
-#Size Modifier, how large should the final image be rendered?
-sizeModifier = height
 
 #Fullscreen?
 fullscreen = False
 
 #How many pixels should one ray render?
-rayPixelWidth = 1
+rayPixelWidth = 2
 
 #Define camera field of view in radians
 fov = 60 * math.pi / 180
+
+#Blocksize to render minimap
+blockSize = 10
+
+#Textures are all squares, what are their dimensions?
+spriteDimension = 16
+
+#Size Modifier, how large should the final image be rendered?
+sizeModifier = height * 3 / 4
 
 #Create a clock used for controlling framerates
 clock = pygame.time.Clock()
@@ -39,7 +45,7 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 30)
 
 #Create screen object with global scope
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("PyCasting")
 
 #Load UI
@@ -50,11 +56,6 @@ UI = pygame.transform.scale(UI, (width, height))
 #Toggle fullscreen if desired
 if fullscreen: pygame.display.toggle_fullscreen()
 
-#Blocksize to render minimap
-blockSize = 10
-
-#Textures are all squares, what are their dimensions?
-spriteDimension = 16
 
 #Convert int to list representing 3 digits
 def intToList(n):
@@ -75,7 +76,6 @@ def Sort(vect):
 				vect[k], vect[k+1] = vect[k+1], vect[k]
 	return vect
 
-#playerX, playerY, playerAngle, level as inputs
 def drawOverlay(player, npcList, drawMap):
 
 	px, py, angle = player.x, player.y, player.angle
@@ -106,9 +106,6 @@ def getDoor(doors, coords):
 	return 0
 
 def castRay(px, py, angle, currentLevel, spriteList, doors):
-
-	#Define ray width
-	rayWidth = fov / width
 
 	#Casting 1 ray to test functionality
 	rayAng = angle
@@ -405,20 +402,233 @@ def castRay(px, py, angle, currentLevel, spriteList, doors):
 
 #Raycast check wall(simple, not a lot of checks)
 def checkWallDist(px, py, angle, level, doors):
-	x, y = px, py
-	stepSize = 0.01
-	while True:
-		x += stepSize * math.cos(angle)
-		y += stepSize * math.sin(angle)
 
-		#doorID = getDoor(doors, [x, y])
-		if (level[int(y)][int(x)] < 899 and level[int(y)][int(x)] > 0):# or (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
-			return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
-		if (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999):
-			doorID = getDoor(doors, [x, y])
-			if (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
-				return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
+	#Casting 1 ray to test functionality
+	rayAng = angle
 
+	#These booleans will run our while loops 
+	horizCollision = False
+	vertCollision = False
+
+	#Keeps track of the distance from player to wall
+	horizDist = 0.0
+	vertDist = 0.0
+	drawDist = 0.0
+
+	#Resetting variables
+	x = px
+	y = py
+
+	cX = 0
+	cY = 0
+
+	dX = 0
+	dY = 0
+
+	#Horizontal line checks
+	#Is the player looking up or down? We have different distance to the next y integer point depending on the characters facing. Let's calculate those values.
+	#Camera is looking up
+	if rayAng >= math.pi:
+		cY = int(py) - py
+		dY = -1
+		
+	#Camera is looking down
+	elif rayAng < math.pi:
+		cY = int(py + 1) - py
+		dY = 1
+
+	#Calculate the change in x to the next integer from the starting position, as well as the change in x afterwards
+	#If statement to verify that there will not be a divide by zero error
+	if math.tan(rayAng != 0):
+		cX = cY / math.tan(rayAng)
+		dX = dY / math.tan(rayAng)
+
+	#Adjust (x,y) to the edge of the current tile the player is in, in the direction he is facing
+	x += cX
+	y += cY
+
+	#Increment through steps, testing each horizontal line where y is an integer
+	while (horizCollision == False):
+
+		#Prevent out of bound error while looking through map array
+		if int(y) >= len(level) or int(x) >= len(level[0]) or int(y) < 0 or int(x) < 0:
+			horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
+			horizCollision = True
+
+		#Is the player looking up or down? This matters because the tile is seen as the top edge,
+		#if we do not subtract 1 from y when looking up, it will look 1 block past where it should.
+		#Player looking up
+		elif rayAng >= math.pi:
+
+			#Collision? If yes, break loop and have distance value set
+			if (level[int(y-1)][int(x)] > 0 and level[int(y-1)][int(x)] <= 899):
+				horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
+				horizCollision = True
+
+			#DOOR CHECK
+			elif (level[int(y-1)][int(x)] > 899 and level[int(y-1)][int(x)] <= 999):
+				
+				currentTile = level[int(y-1)][int(x)]
+
+				doorID = getDoor(doors, [int(x), int(y-1)])
+	
+				if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:				
+					if (level[int(y - 1 - 0.5*dY)][int(x + 0.5*dX + doors[doorID].offset)] == currentTile):
+						horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
+						horizCollision = True
+					else:
+						x += dX
+						y += dY
+				else:
+					x += dX
+					y += dY
+
+			#Otherwise, keep incrementing
+			else:	
+				x += dX
+				y += dY
+
+		#Camera looking down
+		elif rayAng < math.pi:
+
+			#Collision? If yes, break loop and have distance value set
+			if (level[int(y)][int(x)] > 0 and level[int(y)][int(x)] <= 899):
+				horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
+				horizCollision = True
+			
+			#DOOR CHECK
+			elif (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999):
+				
+				currentTile = level[int(y)][int(x)]
+
+				doorID = getDoor(doors, [int(x), int(y)])
+				
+				if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+					if (level[int(y + 0.5*dY)][int(x + 0.5*dX + doors[doorID].offset)] == currentTile):
+						horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
+						horizCollision = True
+					else:
+						x += dX
+						y += dY
+				else:
+					x += dX
+					y += dY
+			
+			#Otherwise, keep incrementing
+			else:	
+				x += dX
+				y += dY
+
+	#Resetting variable values
+	x = px
+	y = py
+
+	cX = 0
+	cY = 0
+
+	dX = 0
+	dY = 0
+
+	#Vertical line checks
+	#Is the player looking right or left? We have different distance to the next x integer point depending on the characters facing. Let's calculate those values.
+	#Camera is looking left
+	if rayAng >= math.pi / 2 and rayAng <= math.pi * 3/2:
+		cX = int(px) - px
+		dX = -1
+
+	#Camera is looking right
+	elif rayAng > math.pi * 3/2 or rayAng < math.pi / 2: #Looking right
+		cX = int(px + 1) - px
+		dX = 1
+
+	#Calculate the change in y to the next integer from the starting position, as well as the change in y afterwards
+	cY = cX * math.tan(rayAng)
+	dY = dX * math.tan(rayAng)
+
+	#Adjust (x,y) to the edge of the current tile the player is in, in the direction he is facing
+	x += cX 
+	y += cY
+
+	#Increment through steps, testing each vertical line where x is an integer
+	while (vertCollision == False):
+
+		#Prevent out of bound error while looking through map array
+		if int(y) >= len(level) or int(x) >= len(level[0]) or int(y) < 0 or int(x) < 0:
+			vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
+			vertCollision = True
+
+		#Is the player looking left or right? This matters because the tile is seen as the left edge,
+		#if we do not subtract 1 from x when looking left, it will look 1 block past where it should.
+		#Player looking left
+		elif rayAng >= math.pi / 2 and rayAng <= math.pi * 3/2:
+			#Collision? If yes, break loop and have distance value set
+			if (level[int(y)][int(x-1)] > 0 and level[int(y)][int(x-1)] <= 899):
+				vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
+				vertCollision = True
+
+			#DOOR CHECK
+			elif (level[int(y)][int(x-1)] > 899 and level[int(y)][int(x-1)] <= 999):
+				
+				currentTile = level[int(y)][int(x-1)]
+
+				doorID = getDoor(doors, [int(x), int(y)])
+				
+				if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+					if (level[int(y + 0.5*dY + doors[doorID].offset)][int(x - 1 - 0.5*dX)] == currentTile):
+						vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
+						vertCollision = True
+					else:
+						x += dX
+						y += dY
+				else:
+					x += dX
+					y += dY
+
+			#Otherwise, continue incrementing
+			else:	
+				x += dX
+				y += dY
+
+		#Player looking right
+		elif rayAng > math.pi * 3/2 or rayAng < math.pi / 2:	
+
+			#Collision? If yes, break loop and have distance value set
+			if (level[int(y)][int(x)] > 0 and level[int(y)][int(x)] <= 899):
+				vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
+				vertCollision = True
+						
+			#DOOR CHECK
+			elif (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999):
+				
+				currentTile = level[int(y)][int(x)]
+
+				doorID = getDoor(doors, [int(x), int(y)])
+				
+				if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+					if (level[int(y + 0.5*dY + doors[doorID].offset)][int(x + 0.5*dX)] == currentTile):
+						vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
+						vertCollision = True
+					else:
+						x += dX
+						y += dY
+				else:
+					x += dX
+					y += dY
+
+			#Otherwise, keep incrementing
+			else:	
+				x += dX
+				y += dY
+
+	#Most of the time, vertical distance and horizontal distance will be different.
+	#We want to render using the shorter value, because it is the first intersection.
+	if (vertDist >= horizDist):
+		drawDist = horizDist
+	elif (vertDist < horizDist):
+		drawDist = vertDist
+
+	#Return the distance from the 
+	return drawDist
 
 def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 	#Create empty list of objects to draw
@@ -474,6 +684,7 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 
 #Render the scene given the player coords & level
 def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font, doors):
+	
 	#Draw background, ceiling and wall split in to two parts
 	pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
 	pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))

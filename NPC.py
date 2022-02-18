@@ -16,6 +16,7 @@ def findNPC(focusMap):
 				continue
 	return npcList
 
+#Return the list position of a door if the coords are near said door
 def getDoor(doors, coords):
 	for i in range(0, len(doors)):
 		if math.sqrt(pow(doors[i].x + 0.5 - coords[0], 2) + pow(doors[i].y + 0.5 - coords[1], 2)) <= 0.8:
@@ -29,16 +30,17 @@ class NPC:
 		self.coords = coords
 		self.x, self.y = coords
 
+		#Define the position that the NPC starts
 		self.startX, self.startY = coords
-		self.angle = 0
 
-		#Adjust coords
+		#Adjust coords to be in the center of a tile
 		self.x += 0.5
 		self.y += 0.5
 
 		#Define type
 		self.type = type
 
+		#Set up variables used to time events
 		self.frameCounter = 0
 		self.lastFrameShot = 0
 
@@ -60,24 +62,35 @@ class NPC:
 		#Define step size
 		self.stepSize = 0.015
 
+		#Declare x & y displacement used for walking
 		self.xDisp = 0
 		self.yDisp = 0
 
+		#Declare distance to player
+		self.distToPlayer = 0
+
+		#Declare health
 		self.hp = hp
 		
+		#Set up path and a variable pointing to the position in the path that
+		#the NPC currently is at
 		self.path = []
 		self.pathPos = 0
 
+		#Define the weapon and after how many frames the enemy can shoot at the player
 		self.weapon = NPCWeapon(25, 10, 12)
 		self.shotDelay = 64
 
 		#Define npc as not active, npc hasnt been seen
 		self.deActivate()
-
+		
 		#stored as [[x0,x1],[y0,y1]]
 		self.updateHitBox()
 
 	def walk(self, player, level, npcList, doors, frameCount):
+		#Update the distance to the player
+		self.distToPlayer = math.sqrt(pow(player.x - self.x, 2) + pow(player.y - self.y, 2))
+
 
 		if (self.isActive and (not self.isObject) and self.isAlive):
 			if frameCount >= self.lastFrameShot + self.shotDelay:
@@ -96,9 +109,9 @@ class NPC:
 		else:
 			xDist = player.x - self.x
 			yDist = player.y - self.y
-		distToPlayer = math.sqrt(pow(player.x - self.x, 2) + pow(player.y - self.y, 2))
+		
 		distTo = math.sqrt(pow(xDist, 2) + pow(yDist, 2))
-		if (self.isActive and (not self.isObject) and self.isAlive and distToPlayer > 0.5):
+		if (self.isActive and (not self.isObject) and self.isAlive and self.distToPlayer > 0.5):
 			
 			#add counter and give like 5 frames before we can recount
 			if (frameCount % len(npcList) == self.label and frameCount > self.frameCounter):
@@ -128,8 +141,7 @@ class NPC:
 			self.updateHitBox()
 
 		if (self.type >= 4000):
-			distTo = math.sqrt(pow(player.x - self.x, 2) + pow(player.y - self.y, 2))
-			if distTo < 0.5:
+			if self.distToPlayer < 0.5:
 				return self.activate(player)
 		return False
 
@@ -147,27 +159,15 @@ class NPC:
 		return False
 
 	def npcDetect(self, npcList):
-		for i in range(0,len(npcList)):
-			if (i != self.label):
+		for npc in npcList:
+			if (not npc == self) and npc.isAlive:
+				distTo = math.sqrt(pow(self.x - npc.x, 2) + pow(self.y - npc.y, 2))
+				if distTo < 0.3:
+					currentAngle = math.atan((npc.y - self.y) / (npc.x - self.x))
+					self.x -= self.stepSize * (npc.x - self.x)
+					self.y -= self.stepSize * (npc.y - self.y)
+					return True
 
-				currentHitBox = npcList[i].hitBox
-
-				minX = currentHitBox[0][0]
-				maxX = currentHitBox[0][1]
-
-				minY = currentHitBox[1][0]
-				maxY = currentHitBox[1][1]
-
-				k=3
-				for n in range(0,k):
-					currentAngle = n * k * math.pi / 180
-					checkX = self.x + 0.3 * math.cos(currentAngle)
-					checkY = self.y + 0.3 * math.sin(currentAngle)
-					if (checkX >= minX and checkX <= maxX and checkY >= minY and checkY <= maxY):
-						self.x -= self.stepSize * math.cos(currentAngle)
-						self.y -= self.stepSize * math.sin(currentAngle)
-
-						return True
 		return False	
 
 	def setActive(self):
@@ -513,22 +513,233 @@ class NPCWeapon:
 
 	#Raycast check wall(simple, not a lot of checks)
 	def checkWallDist(self, player, enemy, level, doors):
-		x, y = enemy.x, enemy.y
-		px, py = player.x, player.y
-		distToPlayer = math.sqrt(pow(px - x, 2) + pow(py - y, 2))
-		xOffset = ((px - x) / distToPlayer)
-		yOffset = ((px - x) / distToPlayer)
-		stepSize = 0.01
-		while True:
-			x += stepSize * xOffset
-			y += stepSize * yOffset
 
-			if (level[int(y)][int(x)] < 899 and level[int(y)][int(x)] > 0):# or (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
-				return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
-			if (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999):
-				doorID = getDoor(doors, [x, y])
-				if (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
-					return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
+		#Casting 1 ray to test functionality
+		rayAng = math.tan((player.y - enemy.y) / (player.x - enemy.x))
+
+		#These booleans will run our while loops 
+		horizCollision = False
+		vertCollision = False
+
+		#Keeps track of the distance from player to wall
+		horizDist = 0.0
+		vertDist = 0.0
+		drawDist = 0.0
+
+		#Resetting variables
+		x = enemy.x
+		y = enemy.y
+
+		cX = 0
+		cY = 0
+
+		dX = 0
+		dY = 0
+
+		#Horizontal line checks
+		#Is the player looking up or down? We have different distance to the next y integer point depending on the characters facing. Let's calculate those values.
+		#Camera is looking up
+		if rayAng >= math.pi:
+			cY = int(enemy.y) - enemy.y
+			dY = -1
+			
+		#Camera is looking down
+		elif rayAng < math.pi:
+			cY = int(enemy.y + 1) - enemy.y
+			dY = 1
+
+		#Calculate the change in x to the next integer from the starting position, as well as the change in x afterwards
+		#If statement to verify that there will not be a divide by zero error
+		if math.tan(rayAng) != 0:
+			cX = cY / math.tan(rayAng)
+			dX = dY / math.tan(rayAng)
+
+		#Adjust (x,y) to the edge of the current tile the player is in, in the direction he is facing
+		x += cX
+		y += cY
+
+		#Increment through steps, testing each horizontal line where y is an integer
+		while (horizCollision == False):
+
+			#Prevent out of bound error while looking through map array
+			if int(y) >= len(level) or int(x) >= len(level[0]) or int(y) < 0 or int(x) < 0:
+				horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+				horizCollision = True
+
+			#Is the player looking up or down? This matters because the tile is seen as the top edge,
+			#if we do not subtract 1 from y when looking up, it will look 1 block past where it should.
+			#Player looking up
+			elif rayAng >= math.pi:
+
+				#Collision? If yes, break loop and have distance value set
+				if (level[int(y-1)][int(x)] > 0 and level[int(y-1)][int(x)] <= 899):
+					horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+					horizCollision = True
+
+				#DOOR CHECK
+				elif (level[int(y-1)][int(x)] > 899 and level[int(y-1)][int(x)] <= 999):
+					
+					currentTile = level[int(y-1)][int(x)]
+
+					doorID = getDoor(doors, [int(x), int(y-1)])
+		
+					if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:				
+						if (level[int(y - 1 - 0.5*dY)][int(x + 0.5*dX + doors[doorID].offset)] == currentTile):
+							horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2)) + 0.5
+							horizCollision = True
+						else:
+							x += dX
+							y += dY
+					else:
+						x += dX
+						y += dY
+
+				#Otherwise, keep incrementing
+				else:	
+					x += dX
+					y += dY
+
+			#Camera looking down
+			elif rayAng < math.pi:
+
+				#Collision? If yes, break loop and have distance value set
+				if (level[int(y)][int(x)] > 0 and level[int(y)][int(x)] <= 899):
+					horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+					horizCollision = True
+				
+				#DOOR CHECK
+				elif (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999):
+					
+					currentTile = level[int(y)][int(x)]
+
+					doorID = getDoor(doors, [int(x), int(y)])
+					
+					if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+						if (level[int(y + 0.5*dY)][int(x + 0.5*dX + doors[doorID].offset)] == currentTile):
+							horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2)) + 0.5
+							horizCollision = True
+						else:
+							x += dX
+							y += dY
+					else:
+						x += dX
+						y += dY
+				
+				#Otherwise, keep incrementing
+				else:	
+					x += dX
+					y += dY
+
+		#Resetting variable values
+		x = enemy.x
+		y = enemy.y
+
+		cX = 0
+		cY = 0
+
+		dX = 0
+		dY = 0
+
+		#Vertical line checks
+		#Is the player looking right or left? We have different distance to the next x integer point depending on the characters facing. Let's calculate those values.
+		#Camera is looking left
+		if rayAng >= math.pi / 2 and rayAng <= math.pi * 3/2:
+			cX = int(enemy.x) - enemy.x
+			dX = -1
+
+		#Camera is looking right
+		elif rayAng > math.pi * 3/2 or rayAng < math.pi / 2: #Looking right
+			cX = int(enemy.x + 1) - enemy.x
+			dX = 1
+
+		#Calculate the change in y to the next integer from the starting position, as well as the change in y afterwards
+		cY = cX * math.tan(rayAng)
+		dY = dX * math.tan(rayAng)
+
+		#Adjust (x,y) to the edge of the current tile the player is in, in the direction he is facing
+		x += cX 
+		y += cY
+
+		#Increment through steps, testing each vertical line where x is an integer
+		while (vertCollision == False):
+
+			#Prevent out of bound error while looking through map array
+			if int(y) >= len(level) or int(x) >= len(level[0]) or int(y) < 0 or int(x) < 0:
+				vertDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+				vertCollision = True
+
+			#Is the player looking left or right? This matters because the tile is seen as the left edge,
+			#if we do not subtract 1 from x when looking left, it will look 1 block past where it should.
+			#Player looking left
+			elif rayAng >= math.pi / 2 and rayAng <= math.pi * 3/2:
+				#Collision? If yes, break loop and have distance value set
+				if (level[int(y)][int(x-1)] > 0 and level[int(y)][int(x-1)] <= 899):
+					vertDist = math.sqrt(pow(x - player.x,2) + pow(y-player.y,2))
+					vertCollision = True
+
+				#DOOR CHECK
+				elif (level[int(y)][int(x-1)] > 899 and level[int(y)][int(x-1)] <= 999):
+					
+					currentTile = level[int(y)][int(x-1)]
+
+					doorID = getDoor(doors, [int(x), int(y)])
+					
+					if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+						if (level[int(y + 0.5*dY + doors[doorID].offset)][int(x - 1 - 0.5*dX)] == currentTile):
+							vertDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2)) + 0.5
+							vertCollision = True
+						else:
+							x += dX
+							y += dY
+					else:
+						x += dX
+						y += dY
+
+				#Otherwise, continue incrementing
+				else:	
+					x += dX
+					y += dY
+
+			#Player looking right
+			elif rayAng > math.pi * 3/2 or rayAng < math.pi / 2:	
+
+				#Collision? If yes, break loop and have distance value set
+				if (level[int(y)][int(x)] > 0 and level[int(y)][int(x)] <= 899):
+					vertDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+					vertCollision = True
+							
+				#DOOR CHECK
+				elif (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999):
+					
+					currentTile = level[int(y)][int(x)]
+
+					doorID = getDoor(doors, [int(x), int(y)])
+					
+					if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
+						if (level[int(y + 0.5*dY + doors[doorID].offset)][int(x + 0.5*dX)] == currentTile):
+							vertDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2)) + 0.5
+							vertCollision = True
+						else:
+							x += dX
+							y += dY
+					else:
+						x += dX
+						y += dY
+
+				#Otherwise, keep incrementing
+				else:	
+					x += dX
+					y += dY
+
+		#Most of the time, vertical distance and horizontal distance will be different.
+		#We want to render using the shorter value, because it is the first intersection.
+		if (vertDist >= horizDist):
+			drawDist = horizDist
+		elif (vertDist < horizDist):
+			drawDist = vertDist
+
+		#Return the distance from the 
+		return drawDist
 	
 	def Shoot(self, enemy, player, level, doors):
 		distToPlayer = math.sqrt(pow(player.x - enemy.x, 2) + pow(player.y - enemy.y, 2))
