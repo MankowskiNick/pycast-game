@@ -13,7 +13,8 @@ class Camera:
 		self.x, self.y = coords
 		self.angle = facing
 
-		self.hp = 100
+		self.hp = 85
+		self.isAlive = True
 
 		self.ammoCount = [
 			32,
@@ -24,35 +25,36 @@ class Camera:
 		self.turnAdjust = math.pi / 64
 		self.movementSpeed = 0.05
 	def movePlayer(self, key, level, doors):
-		#Check to ensure that degree is not overshot past 2pi or 0
-		if self.angle > math.pi * 2:
-			self.angle = 0 + self.turnAdjust
-		elif self.angle < 0:
-			self.angle = math.pi * 2 - self.turnAdjust
+		if self.isAlive:
+			#Check to ensure that degree is not overshot past 2pi or 0
+			if self.angle > math.pi * 2:
+				self.angle = 0 + self.turnAdjust
+			elif self.angle < 0:
+				self.angle = math.pi * 2 - self.turnAdjust
 
-		#W key, fordward
-		if key == 119:
-			self.x += self.movementSpeed*math.cos(self.angle)
-			self.y += self.movementSpeed*math.sin(self.angle)
-		#S key, backward
-		if key == 115:
-			self.x -= self.movementSpeed*math.cos(self.angle)
-			self.y -= self.movementSpeed*math.sin(self.angle)
-		#A key, left
-		if key == 97:
-			self.x += self.movementSpeed*math.sin(self.angle)
-			self.y -= self.movementSpeed*math.cos(self.angle)
-		#D key, right
-		if key == 100:
-			self.x -= self.movementSpeed*math.sin(self.angle)
-			self.y += self.movementSpeed*math.cos(self.angle)
-		#J key, turn left
-		if key == 106:
-			self.angle -= self.turnAdjust
-		#L key, turn right
-		if key == 108:
-			self.angle += self.turnAdjust
-		self.wallDetect(level, doors)
+			#W key, fordward
+			if key == 119:
+				self.x += self.movementSpeed*math.cos(self.angle)
+				self.y += self.movementSpeed*math.sin(self.angle)
+			#S key, backward
+			if key == 115:
+				self.x -= self.movementSpeed*math.cos(self.angle)
+				self.y -= self.movementSpeed*math.sin(self.angle)
+			#A key, left
+			if key == 97:
+				self.x += self.movementSpeed*math.sin(self.angle)
+				self.y -= self.movementSpeed*math.cos(self.angle)
+			#D key, right
+			if key == 100:
+				self.x -= self.movementSpeed*math.sin(self.angle)
+				self.y += self.movementSpeed*math.cos(self.angle)
+			#J key, turn left
+			if key == 106:
+				self.angle -= self.turnAdjust
+			#L key, turn right
+			if key == 108:
+				self.angle += self.turnAdjust
+			self.wallDetect(level, doors)
 	def wallDetect(self, level, doors):
 		xOffset = self.x - int(self.x)
 		yOffSet = self.y - int(self.y)
@@ -90,8 +92,16 @@ class Camera:
 		self.hp += hp
 
 		if self.hp > 100:
-			self.hp == 100
+			self.hp = 100
+			return False
+		else:
+			return True
 	
 	def addAmmo(self, count):
 		for i in range(0,len(self.ammoCount)):
 			self.ammoCount[i] += count
+	
+	def takeDamage(self, damage):
+		self.hp -= damage
+		if self.hp <= 0:
+			self.isAlive = False

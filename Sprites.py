@@ -23,12 +23,6 @@ def createSpriteList():
 
 		#Doors
 		900 : pygame.image.load("assets/doors/door1.png"),
-		
-		#Pointers for HIRs mapping
-		996 : pygame.image.load("assets/system/pointer_hall.png"),
-		997 : pygame.image.load("assets/system/pointer_room.png"),
-		998 : pygame.image.load("assets/system/pointer_intersection.png"),
-		999 : pygame.image.load("assets/system/pointer.png"),
 
 		#Object Sprites
 		1000 : pygame.image.load("assets/object/barrel.png"),

@@ -6,12 +6,21 @@ from pygame.locals import *
 import Render, Format, Camera, NPC, LevelCreator, Sprites, Weapon, Door
 from Global import *
 from Render import *
-#from Format import *
 from Sprites import *
 from Weapon import *
 
 #Initialize pygame
 pygame.init()
+#Create all sprite lists used by programw
+spriteList = createSpriteList()
+boomList = createBoomList(width, height)
+weaponSpriteList = createWeapSpriteList(width, height)
+
+#Create weapon list
+weaponList = [
+	Weapon(1, 25, 8, 4, 0, weaponSpriteList[1], boomList),
+	Weapon(1, 50, 3.5, 20, 1, weaponSpriteList[2], boomList),
+]
 
 #Load map and NPC list
 mapLevel, npcList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/level.leveldata")
@@ -28,19 +37,8 @@ levelHIR= NPC.HIRs(mapLevel)
 for i in range(0,len(npcList)):
 	npcList[i].giveHIR(levelHIR, player, mapLevel)
 
-#Create all sprite lists used by program
-spriteList = createSpriteList()
-boomList = createBoomList(width, height)
-weaponSpriteList = createWeapSpriteList(width, height)
-
 #Create font used to render numbers
 font = createFont(width, height)
-
-#Create weapon list
-weaponList = [
-	Weapon(1, 25, 8, 4, 0, weaponSpriteList[1], boomList),
-	Weapon(1, 50, 3.5, 20, 1, weaponSpriteList[2], boomList),
-]
 
 #Declare values needed 
 currentWeapon = weaponList[0]

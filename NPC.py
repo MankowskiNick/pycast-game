@@ -1,4 +1,6 @@
-import math, sys
+import math, sys, random
+from random import seed
+from random import randint
 
 #Find NPCs and create database of them along with coords
 def findNPC(focusMap):                                         
@@ -16,7 +18,7 @@ def findNPC(focusMap):
 
 def getDoor(doors, coords):
 	for i in range(0, len(doors)):
-		if math.sqrt(pow(doors[i].x + 0.5 - coords[0], 2) + pow(doors[i].y + 0.5 - coords[1], 2)) <= 0.5:
+		if math.sqrt(pow(doors[i].x + 0.5 - coords[0], 2) + pow(doors[i].y + 0.5 - coords[1], 2)) <= 0.8:
 			return i
 	return 0
 
@@ -38,6 +40,7 @@ class NPC:
 		self.type = type
 
 		self.frameCounter = 0
+		self.lastFrameShot = 0
 
 		#Define if NPC is static object or actual npc
 		if (self.type < 2000):
@@ -55,24 +58,35 @@ class NPC:
 		self.label = label
 
 		#Define step size
-		self.stepSize = 0.03
+		self.stepSize = 0.015
 
 		self.xDisp = 0
 		self.yDisp = 0
 
 		self.hp = hp
-
+		
 		self.path = []
 		self.pathPos = 0
 
+		self.weapon = NPCWeapon(25, 10, 12)
+		self.shotDelay = 64
+
 		#Define npc as not active, npc hasnt been seen
-		#self.setActive()
 		self.deActivate()
 
 		#stored as [[x0,x1],[y0,y1]]
 		self.updateHitBox()
 
 	def walk(self, player, level, npcList, doors, frameCount):
+
+		if (self.isActive and (not self.isObject) and self.isAlive):
+			if frameCount >= self.lastFrameShot + self.shotDelay:
+				seed(frameCount / 13 + player.x - self.hp * 987)
+				self.lastFrameShot = frameCount
+				chance = randint(0,100)
+				if chance <= 40:
+					self.weapon.Shoot(self, player, level, doors)
+
 		self.coords = self.x, self.y
 		xDist = 1
 		yDist = 1
@@ -116,16 +130,17 @@ class NPC:
 		if (self.type >= 4000):
 			distTo = math.sqrt(pow(player.x - self.x, 2) + pow(player.y - self.y, 2))
 			if distTo < 0.5:
-				self.activate(player)
-				return True
+				return self.activate(player)
 		return False
 
 	def wallDetect(self, level, doors):
-		doorID = getDoor(doors, [self.x, self.y])
-        
+		doorID = getDoor(doors, [self.x + self.xDisp, self.y + self.yDisp])
+		
 		if (level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] > 0 and level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] <= 899) or (level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] > 899 and level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] <= 999 and (not doors[doorID].isOpen) and (not doorID == 0)):
+			doorID = getDoor(doors, [self.x + self.xDisp, self.y])
 			if (level[int(self.y)][int(self.x + self.xDisp)] == 0) or (level[int(self.y)][int(self.x + self.xDisp)] > 899 and level[int(self.y)][int(self.x + self.xDisp)] <= 999 and (doors[doorID].isOpen) and (not doorID == 0)):
 				self.yDisp = 0
+			doorID = getDoor(doors, [self.x, self.y + self.yDisp])
 			if (level[int(self.y + self.yDisp)][int(self.x)] == 0) or (level[int(self.y + self.yDisp)][int(self.x)] > 899 and level[int(self.y + self.yDisp)][int(self.x)] <= 999 and (doors[doorID].isOpen) and (not doorID == 0)):
 				self.xDisp = 0
 			return False
@@ -187,303 +202,336 @@ class NPC:
 	#In the event the self object is a pickup, activate whatever it is intended to do.
 	def activate(self, player):
 		if self.type < 4000:
-			return
+			return False
 		else:
 			if self.type == 4000:
-				player.addHealth(15)
+				return player.addHealth(15)
 			elif self.type == 4001:
 				player.addAmmo(12)
+				return True
 			elif self.type == 4002:
 				player.addAmmo(4)
+				return True
 
 class HIRs:
-    def __init__(self, level):
-        #hallwayCount = 0
-        #roomCount = 0 
-        #Ultimately I want this to be what we can access
-        self.rooms = []
-        self.intersections = []
-        self.halls = []
+	def __init__(self, level):
+		#hallwayCount = 0
+		#roomCount = 0 
+		#Ultimately I want this to be what we can access
+		self.rooms = []
+		self.intersections = []
+		self.halls = []
 
-        self.level = level
+		self.level = level
 
-        self.path = []
+		self.path = []
 
-        levelWidth = len(self.level[0])
-        levelHeight = len(self.level)
+		levelWidth = len(self.level[0])
+		levelHeight = len(self.level)
 
-        listChecked = [[0,0]]
+		listChecked = [[0,0]]
  
-        #Scan the entire level
-        for x in range(0,levelWidth):
-            for y in range(0,levelHeight):
-                alreadyChecked = False
+		#Scan the entire level
+		for x in range(0,levelWidth):
+			for y in range(0,levelHeight):
+				alreadyChecked = False
 
-                for coords in listChecked:
-                    
-                    if coords == [x,y]:
-                        alreadyChecked = True
+				for coords in listChecked:
+					
+					if coords == [x,y]:
+						alreadyChecked = True
 
-                if not alreadyChecked and (level[y][x] == 0 or level[y][x] > 999):
-                    print("New space found.  Starting coords: ", str((x,y)), " Level value: ", str(level[y][x]))
-                    doneExpanding = False
-                    currentBox = [x,y]
-                    width, height = 1 , 1
-                    addWidth = True
-                    counter = 0
-                    while not doneExpanding:
-                        success, tmpBox, tmpWidth, tmpHeight, newlyCheckedCoords, tmpCoords = self.expand(currentBox, width, height, addWidth, level)
-                        if success: 
-                            counter = 0
-                            currentBox = tmpBox
-                            width, height = tmpWidth, tmpHeight
-                            currentCoordList = tmpCoords
-                        else:
-                            if counter < 5:
-                                counter += 1
-                            else:
-                                doneExpanding = True
-                        if addWidth:
-                            addWidth = False
-                        else: 
-                            addWidth = True
-                        for c in newlyCheckedCoords:
-                            listChecked.append(c)
+				if not alreadyChecked and (level[y][x] == 0 or level[y][x] > 999):
+					print("New space found.  Starting coords: ", str((x,y)), " Level value: ", str(level[y][x]))
+					doneExpanding = False
+					currentBox = [x,y]
+					width, height = 1 , 1
+					addWidth = True
+					counter = 0
+					while not doneExpanding:
+						success, tmpBox, tmpWidth, tmpHeight, newlyCheckedCoords, tmpCoords = self.expand(currentBox, width, height, addWidth, level)
+						if success: 
+							counter = 0
+							currentBox = tmpBox
+							width, height = tmpWidth, tmpHeight
+							currentCoordList = tmpCoords
+						else:
+							if counter < 5:
+								counter += 1
+							else:
+								doneExpanding = True
+						if addWidth:
+							addWidth = False
+						else: 
+							addWidth = True
+						for c in newlyCheckedCoords:
+							listChecked.append(c)
 
-                    
-                    perimeterCoords = []
+					
+					perimeterCoords = []
 
-                    #self.level[y][x] = 996 #TEMP - Place marker
+					#self.level[y][x] = 996 #TEMP - Place marker
 
-                    #Calculate the perimeter coords
-                    perimeterCoords = self.findPerimeter(x, y, width, height)
-                    
-                    #create new room object
-                    self.rooms.append(Room([x,y], [width, height], perimeterCoords, currentCoordList, len(self.rooms)))
-                    print("Completed space")
-                    print("    -ID: ", str(len(self.rooms) - 1))
-                    print("    -Coords: ", str((x, y)))
-                    print("    -Size: ", str(width), "x", str(height))
-                    print(" ")
+					#Calculate the perimeter coords
+					perimeterCoords = self.findPerimeter(x, y, width, height)
+					
+					#create new room object
+					self.rooms.append(Room([x,y], [width, height], perimeterCoords, currentCoordList, len(self.rooms)))
+					print("Completed space")
+					print("    -ID: ", str(len(self.rooms) - 1))
+					print("    -Coords: ", str((x, y)))
+					print("    -Size: ", str(width), "x", str(height))
+					print(" ")
 
-        #Find all possible intersections
-        intersectionCoords = []
-        intersectionConnections = []
-        for i in range(0,len(self.rooms)):
-            for j in range(0,len(self.rooms)):
-                if not (i == j):
-                    newIntersectionCoords = self.calculateIntersect(self.rooms[i], self.rooms[j], level, intersectionCoords)
-                    if (len(newIntersectionCoords) > 0):
-                        newIntersectionConnections = [i,j] #room 1 value, room 2 value
-                        for n in range(0,len(newIntersectionCoords)):
-                            print("New intersection found.\n    Coords: (", str(newIntersectionCoords[n][0]), " , ", str(newIntersectionCoords[n][1]), ")")
-                        intersectionCoords += newIntersectionCoords
-                        intersectionConnections.append(newIntersectionConnections)
-                        print("    Links:", str(newIntersectionConnections),"\n")
+		#Find all possible intersections
+		intersectionCoords = []
+		intersectionConnections = []
+		for i in range(0,len(self.rooms)):
+			for j in range(0,len(self.rooms)):
+				if not (i == j):
+					newIntersectionCoords = self.calculateIntersect(self.rooms[i], self.rooms[j], level, intersectionCoords)
+					if (len(newIntersectionCoords) > 0):
+						newIntersectionConnections = [i,j] #room 1 value, room 2 value
+						for n in range(0,len(newIntersectionCoords)):
+							print("New intersection found.\n    Coords: (", str(newIntersectionCoords[n][0]), " , ", str(newIntersectionCoords[n][1]), ")")
+						intersectionCoords += newIntersectionCoords
+						intersectionConnections.append(newIntersectionConnections)
+						print("    Links:", str(newIntersectionConnections),"\n")
 
-        #Remove intersections that spawn next to eachother
-        for n in range(0, len(intersectionCoords)):
-            if n < len(intersectionCoords):
-                cullList = self.removeDuplicates(intersectionCoords[n][0], intersectionCoords[n][1], [], intersectionCoords)
-                for k in range(0, len(cullList)):
-                    if (cullList[k] == intersectionCoords[n]):
-                        intersectionCoords.remove(intersectionCoords[n])
-        
-        #Link rooms
-        print("Linking rooms...")
-        for n in range(0, len(intersectionCoords)):
-            #level[intersectionCoords[n][1]][intersectionCoords[n][0]] = 998  #TEMP - PLACE MARKER
-            self.rooms[intersectionConnections[n][0]].linkRoom(intersectionConnections[n][1], intersectionCoords[n])
-            self.rooms[intersectionConnections[n][1]].linkRoom(intersectionConnections[n][0], intersectionCoords[n])
-        
-        #Display linker info
-        for room in self.rooms:
-            print("Room ID: ", str(room.id), "\n    -Coords: (", str(room.coords[0]), " , ", str(room.coords[1]), ")\n  -Links: ", str(room.connections))
-        
-        #self.level = level #TEMP map - we use to show indicators of where things are
-        print("HIRs model created.")
-
-    def expand(self, currentBox, width, height, addWidth, level):
-        checkedCoords = []
-        
-        #unpack values from currentBox
-        left, top = currentBox[0], currentBox[1]
-        if addWidth:
-
-            width += 1
-
-            box = [left, top]
-            #check box
-            boxSuccess = True
-            for i in range(0,width):
-                for j in range(0,height):
-                    x = i + box[0]
-                    y = j + box[1]
-                    checkedCoords.append([x, y])
-                    if level[y][x] > 0 and level[y][x] <= 899:
-                        boxSuccess = False
-                    else:
-                        level[y][x] == 5
-            if boxSuccess:
-                return True, box, width, height, checkedCoords, checkedCoords
-        else:
-
-            height += 1
-            
-            box = [left, top]
-
-            #check box
-            boxSuccess = True
-            for i in range(0,width):
-                for j in range(0,height):
-                    x = i + box[0]
-                    y = j + box[1]
-                    checkedCoords.append([x, y])
-                    if level[y][x] > 0 and level[y][x] <= 899:
-                        boxSuccess = False
-                    else:
-                        level[y][x] == 5
-            if boxSuccess:
-                return True, box, width, height, checkedCoords, checkedCoords
-
-        return False, [], 0, 0, checkedCoords, []
-
-    def findPerimeter(self, x,y,width,height):
-        perimeterCoords = []
-
-        #Add tiles on the horizontal sides
-        for i in range(0, width):
-            perimeterCoords.append([x + i, y - 1])
-            perimeterCoords.append([x + i, y + height])
-
-        #Add tiles on the vertical sides
-        for i in range(0, height):
-            perimeterCoords.append([x - 1, y + i])
-            perimeterCoords.append([x + width, y + i])
-
-        return perimeterCoords
-
-    def calculateIntersect(self, room1, room2, level, intersectCoords):
-        intersectionPoints = []
-        perimeter1 = room1.perimeterCoords
-        perimeter2 = room2.perimeterCoords
-        
-        #Check perimeters
-        for i in range(0, len(room1.perimeterCoords)):
-            for j in range(0, len(room2.perimeterCoords)):
-                if (room1.perimeterCoords[i] == room2.perimeterCoords[j] and ((level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] == 0) or (level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] > 899 and level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] <= 999))):
-                    intersectionPoints.append(room1.perimeterCoords[i])
-        
-        #Check interior points
-        for i in range(0, len(room1.coordList)):
-            for j in range(0, len(room2.coordList)):
-                if (room1.coordList[i] == room2.coordList[j]):
-                    intersectionPoints.append(room1.coordList[i])
-        
-        #Don't add intersections we have already counted, ensure we haven't already counted these ones.
-        #If we don't add this, it will double count every intersection
-        for n in range(0,len(intersectionPoints)):
-            for k in range(0,len(intersectCoords)):
-                if n < len(intersectionPoints):
-                    if (intersectionPoints[n] == intersectCoords[k]):
-                        intersectionPoints.remove(intersectionPoints[n])
-                        #break
-        return intersectionPoints
-
-    def removeDuplicates(self, x, y, cullList, intersectCoords):
-        for i in range(x-1, x+2):
-            for j in range(y-1, y+2):
-                for n in range(0, len(intersectCoords)):
-                    foundCoord = False
-                    for k in range(0, len(cullList)):
-                        if (cullList[k] == [i, j]):
-                            foundCoord = True
-                    if (not foundCoord) and ([i,j] == intersectCoords[n]) and not (i == x and j == y):
-                        cullList.append([i,j])
-                        cullList.append(self.removeDuplicates(i, j, cullList, intersectCoords))
-        return cullList
-
-    def getRoom(self, x, y):
-        for room in self.rooms:
-            for coords in room.coordList:
-                if ([int(x), int(y)] == coords):
-                    return room.id 
-            for coords in room.perimeterCoords:
-                if ([int(x), int(y)] == coords):
-                    return room.id 
-
-    def pathfind(self, enemy, player, level):
-        roomPath = [self.getRoom(enemy.coords[0], enemy.coords[1])]
-        tmp, tmpRoomPath = self.generateRoomPath(enemy.coords, player, [])
-        roomPath += tmpRoomPath
-        phantomList = []
-        if (len(roomPath) > 1):
-            phantomList = self.getMaze(roomPath, 1, [[self.rooms[roomPath[0]].getIntersectionCoords(self.rooms[roomPath[1]].id)[0], self.rooms[roomPath[0]].getIntersectionCoords(self.rooms[roomPath[1]].id)[1]]])
-        #for i in phantomList:
-            #self.level[i[1]][i[0]] = 999
+		#Remove intersections that spawn next to eachother
+		for n in range(0, len(intersectionCoords)):
+			if n < len(intersectionCoords):
+				cullList = self.removeDuplicates(intersectionCoords[n][0], intersectionCoords[n][1], [], intersectionCoords)
+				for k in range(0, len(cullList)):
+					if (cullList[k] == intersectionCoords[n]):
+						intersectionCoords.remove(intersectionCoords[n])
 		
-        return phantomList
-            
+		#Link rooms
+		print("Linking rooms...")
+		for n in range(0, len(intersectionCoords)):
+			#level[intersectionCoords[n][1]][intersectionCoords[n][0]] = 998  #TEMP - PLACE MARKER
+			self.rooms[intersectionConnections[n][0]].linkRoom(intersectionConnections[n][1], intersectionCoords[n])
+			self.rooms[intersectionConnections[n][1]].linkRoom(intersectionConnections[n][0], intersectionCoords[n])
+		
+		#Display linker info
+		for room in self.rooms:
+			print("Room ID: ", str(room.id), "\n    -Coords: (", str(room.coords[0]), " , ", str(room.coords[1]), ")\n  -Links: ", str(room.connections))
+		
+		#self.level = level #TEMP map - we use to show indicators of where things are
+		print("HIRs model created.")
 
-    #Generate a path of rooms to go to
-    def generateRoomPath(self, coords, player, path):
-        playerRoom = self.getRoom(player.x, player.y)
-        enemyRoom = self.getRoom(coords[0], coords[1])
-        if (playerRoom == enemyRoom):
-            return True, path
-        else:
-            for room in self.rooms[enemyRoom].connections:
-                for checkRoom in path:
-                    if checkRoom == room:
-                        return False, path
-                path.append(room)
-                result, tmpPath = self.generateRoomPath(self.rooms[room].coords, player, path)
-                if result:
-                    path = tmpPath
-                    return True, path
-                else:
-                    path.remove(room)
-        return False, path
+	def expand(self, currentBox, width, height, addWidth, level):
+		checkedCoords = []
+		
+		#unpack values from currentBox
+		left, top = currentBox[0], currentBox[1]
+		if addWidth:
 
-    def getMaze(self, roomPath, pos, phantomList):
-        resolution = 1
-        if (pos == len(roomPath)):
-            return phantomList
-        else:
-            if (pos + 1 < len(roomPath)):
-                coord1 = self.rooms[roomPath[pos - 1]].getIntersectionCoords(roomPath[pos])
-                coord2 = self.rooms[roomPath[pos]].getIntersectionCoords(roomPath[pos + 1])
+			width += 1
 
-                #print(coord1, coord2)
-                currentX, currentY = coord1[0], coord1[1]
-                stepX, stepY = (coord2[0] - coord1[0]) / resolution, (coord2[1] - coord1[1]) / resolution
-                for i in range(0,resolution):
-                    currentX += stepX
-                    currentY += stepY
-                    if (self.level[int(currentY)][int(currentX)] == 0 or self.level[int(currentY)][int(currentX)] >= 2000):
-                        #self.level[int(currentY)][int(currentX)] = 999
-                        #phantomList.append(Phantom(int(currentX), int(currentY)))
-                        phantomList.append([int(currentX), int(currentY)])
+			box = [left, top]
+			#check box
+			boxSuccess = True
+			for i in range(0,width):
+				for j in range(0,height):
+					x = i + box[0]
+					y = j + box[1]
+					checkedCoords.append([x, y])
+					if level[y][x] > 0 and level[y][x] <= 899:
+						boxSuccess = False
+					else:
+						level[y][x] == 5
+			if boxSuccess:
+				return True, box, width, height, checkedCoords, checkedCoords
+		else:
 
-            return self.getMaze(roomPath, pos + 1, phantomList)
-                  
+			height += 1
+			
+			box = [left, top]
+
+			#check box
+			boxSuccess = True
+			for i in range(0,width):
+				for j in range(0,height):
+					x = i + box[0]
+					y = j + box[1]
+					checkedCoords.append([x, y])
+					if level[y][x] > 0 and level[y][x] <= 899:
+						boxSuccess = False
+					else:
+						level[y][x] == 5
+			if boxSuccess:
+				return True, box, width, height, checkedCoords, checkedCoords
+
+		return False, [], 0, 0, checkedCoords, []
+
+	def findPerimeter(self, x,y,width,height):
+		perimeterCoords = []
+
+		#Add tiles on the horizontal sides
+		for i in range(0, width):
+			perimeterCoords.append([x + i, y - 1])
+			perimeterCoords.append([x + i, y + height])
+
+		#Add tiles on the vertical sides
+		for i in range(0, height):
+			perimeterCoords.append([x - 1, y + i])
+			perimeterCoords.append([x + width, y + i])
+
+		return perimeterCoords
+
+	def calculateIntersect(self, room1, room2, level, intersectCoords):
+		intersectionPoints = []
+		perimeter1 = room1.perimeterCoords
+		perimeter2 = room2.perimeterCoords
+		
+		#Check perimeters
+		for i in range(0, len(room1.perimeterCoords)):
+			for j in range(0, len(room2.perimeterCoords)):
+				if (room1.perimeterCoords[i] == room2.perimeterCoords[j] and ((level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] == 0) or (level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] > 899 and level[room1.perimeterCoords[i][1]][room1.perimeterCoords[i][0]] <= 999))):
+					intersectionPoints.append(room1.perimeterCoords[i])
+		
+		#Check interior points
+		for i in range(0, len(room1.coordList)):
+			for j in range(0, len(room2.coordList)):
+				if (room1.coordList[i] == room2.coordList[j]):
+					intersectionPoints.append(room1.coordList[i])
+		
+		#Don't add intersections we have already counted, ensure we haven't already counted these ones.
+		#If we don't add this, it will double count every intersection
+		for n in range(0,len(intersectionPoints)):
+			for k in range(0,len(intersectCoords)):
+				if n < len(intersectionPoints):
+					if (intersectionPoints[n] == intersectCoords[k]):
+						intersectionPoints.remove(intersectionPoints[n])
+						#break
+		return intersectionPoints
+
+	def removeDuplicates(self, x, y, cullList, intersectCoords):
+		for i in range(x-1, x+2):
+			for j in range(y-1, y+2):
+				for n in range(0, len(intersectCoords)):
+					foundCoord = False
+					for k in range(0, len(cullList)):
+						if (cullList[k] == [i, j]):
+							foundCoord = True
+					if (not foundCoord) and ([i,j] == intersectCoords[n]) and not (i == x and j == y):
+						cullList.append([i,j])
+						cullList.append(self.removeDuplicates(i, j, cullList, intersectCoords))
+		return cullList
+
+	def getRoom(self, x, y):
+		for room in self.rooms:
+			for coords in room.coordList:
+				if ([int(x), int(y)] == coords):
+					return room.id 
+			for coords in room.perimeterCoords:
+				if ([int(x), int(y)] == coords):
+					return room.id 
+
+	def pathfind(self, enemy, player, level):
+		roomPath = [self.getRoom(enemy.coords[0], enemy.coords[1])]
+		tmp, tmpRoomPath = self.generateRoomPath(enemy.coords, player, [])
+		roomPath += tmpRoomPath
+		phantomList = []
+		if (len(roomPath) > 1):
+			phantomList = self.getMaze(roomPath, 1, [[self.rooms[roomPath[0]].getIntersectionCoords(self.rooms[roomPath[1]].id)[0], self.rooms[roomPath[0]].getIntersectionCoords(self.rooms[roomPath[1]].id)[1]]])
+		#for i in phantomList:
+			#self.level[i[1]][i[0]] = 999
+		
+		return phantomList
+			
+
+	#Generate a path of rooms to go to
+	def generateRoomPath(self, coords, player, path):
+		playerRoom = self.getRoom(player.x, player.y)
+		enemyRoom = self.getRoom(coords[0], coords[1])
+		if (playerRoom == enemyRoom):
+			return True, path
+		else:
+			for room in self.rooms[enemyRoom].connections:
+				for checkRoom in path:
+					if checkRoom == room:
+						return False, path
+				path.append(room)
+				result, tmpPath = self.generateRoomPath(self.rooms[room].coords, player, path)
+				if result:
+					path = tmpPath
+					return True, path
+				else:
+					path.remove(room)
+		return False, path
+
+	def getMaze(self, roomPath, pos, phantomList):
+		resolution = 1
+		if (pos == len(roomPath)):
+			return phantomList
+		else:
+			if (pos + 1 < len(roomPath)):
+				coord1 = self.rooms[roomPath[pos - 1]].getIntersectionCoords(roomPath[pos])
+				coord2 = self.rooms[roomPath[pos]].getIntersectionCoords(roomPath[pos + 1])
+
+				#print(coord1, coord2)
+				currentX, currentY = coord1[0], coord1[1]
+				stepX, stepY = (coord2[0] - coord1[0]) / resolution, (coord2[1] - coord1[1]) / resolution
+				for i in range(0,resolution):
+					currentX += stepX
+					currentY += stepY
+					if (self.level[int(currentY)][int(currentX)] == 0 or self.level[int(currentY)][int(currentX)] >= 2000):
+						#self.level[int(currentY)][int(currentX)] = 999
+						#phantomList.append(Phantom(int(currentX), int(currentY)))
+						phantomList.append([int(currentX), int(currentY)])
+
+			return self.getMaze(roomPath, pos + 1, phantomList)
+				  
 class Room:
-    #Coordinates are a list given in terms of the top left tile, size is a list in terms of [width, height]
-    def __init__(self, coords, size, perimeterCoords, coordList, id):
-        self.coords = coords
-        self.size = size
-        self.perimeterCoords = perimeterCoords
-        self.coordList = coordList
-        self.id = id
-        self.connections = []
-        self.intersectionCoords = []
-    
+	#Coordinates are a list given in terms of the top left tile, size is a list in terms of [width, height]
+	def __init__(self, coords, size, perimeterCoords, coordList, id):
+		self.coords = coords
+		self.size = size
+		self.perimeterCoords = perimeterCoords
+		self.coordList = coordList
+		self.id = id
+		self.connections = []
+		self.intersectionCoords = []
+	
 	#Link rooms
-    def linkRoom(self, roomID, coords):
-        self.connections.append(roomID)
-        self.intersectionCoords.append(coords)
-    def getIntersectionCoords(self, searchTerm):
-        for i in range(0,len(self.connections)):
-            if self.connections[i] == searchTerm:
-                return self.intersectionCoords[i]
-        return [0,0]
+	def linkRoom(self, roomID, coords):
+		self.connections.append(roomID)
+		self.intersectionCoords.append(coords)
+	def getIntersectionCoords(self, searchTerm):
+		for i in range(0,len(self.connections)):
+			if self.connections[i] == searchTerm:
+				return self.intersectionCoords[i]
+		return [0,0]
+
+class NPCWeapon:
+	def __init__(self, damage, range, bulletCount):
+		self.damage = damage
+		self.range = range
+		self.bulletCount = bulletCount
+
+	#Raycast check wall(simple, not a lot of checks)
+	def checkWallDist(self, player, enemy, level, doors):
+		x, y = enemy.x, enemy.y
+		px, py = player.x, player.y
+		distToPlayer = math.sqrt(pow(px - x, 2) + pow(py - y, 2))
+		xOffset = ((px - x) / distToPlayer)
+		yOffset = ((px - x) / distToPlayer)
+		stepSize = 0.01
+		while True:
+			x += stepSize * xOffset
+			y += stepSize * yOffset
+
+			if (level[int(y)][int(x)] < 899 and level[int(y)][int(x)] > 0):# or (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
+				return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
+			if (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999):
+				doorID = getDoor(doors, [x, y])
+				if (level[int(y)][int(x)] > 899 and level[int(y)][int(x)] <= 999 and not doors[doorID].isOpen):
+					return math.sqrt(pow(px - x, 2) + pow(py - y, 2))
+	
+	def Shoot(self, enemy, player, level, doors):
+		distToPlayer = math.sqrt(pow(player.x - enemy.x, 2) + pow(player.y - enemy.y, 2))
+		distToWall = self.checkWallDist(player, enemy, level, doors)
+		if distToPlayer < distToWall and distToPlayer <= self.range:
+			player.takeDamage(self.damage)

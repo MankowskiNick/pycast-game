@@ -13,7 +13,7 @@ red = (255,0,0)
 blue = (0,0,255)
 brown = (235, 143, 52)
 
-drawMinimap = False
+drawMinimap = True
 
 #Define screen size
 width = 800
@@ -466,61 +466,65 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 		drawSize = sizeModifier / drawVect[i][1]
 		sprite = spriteList[drawVect[i][0].type]
 
-		#testing to see if this works? weird error sometimes
-		if True:#drawSize <= height:
-			sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
-			xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
-			xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
-			xPos = (xDisp / xRange) * width
-			screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
+		sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
+		xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
+		xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
+		xPos = (xDisp / xRange) * width
+		screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
 
 #Render the scene given the player coords & level
 def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font, doors):
-    #Draw background, ceiling and wall split in to two parts
-    pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
-    pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))
+	#Draw background, ceiling and wall split in to two parts
+	pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
+	pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))
 
-    #Cycle through eveny column of pixels on the screen and draw a column of the appropriate size for each
-    for i in range(0,int(width / rayPixelWidth)):
-        #Calculate current ray angle given fov and current camera angle
-        currentAngle = ((player.angle - fov/2) + (i * rayPixelWidth * fov / width))
+	#Cycle through eveny column of pixels on the screen and draw a column of the appropriate size for each
+	for i in range(0,int(width / rayPixelWidth)):
+		#Calculate current ray angle given fov and current camera angle
+		currentAngle = ((player.angle - fov/2) + (i * rayPixelWidth * fov / width))
 
-        #Overflow for 2pi and 0
-        if currentAngle > 2 * math.pi:
-            currentAngle -= 2 * math.pi
-        elif currentAngle < 0:
-            currentAngle += 2 * math.pi
+		#Overflow for 2pi and 0
+		if currentAngle > 2 * math.pi:
+			currentAngle -= 2 * math.pi
+		elif currentAngle < 0:
+			currentAngle += 2 * math.pi
 
-        #Define column length so that out draw function looks better
-        enviroRenderOutput = castRay(player.x, player.y, currentAngle, currentLevel, spriteList, doors)
+		#Define column length so that out draw function looks better
+		enviroRenderOutput = castRay(player.x, player.y, currentAngle, currentLevel, spriteList, doors)
 
-        #Disassemble output tuple
-        columnLength, textureColumn = enviroRenderOutput
+		#Disassemble output tuple
+		columnLength, textureColumn = enviroRenderOutput
 
-        #Draw column, each one will be centered vertically along screen.
-        screen.blit(textureColumn, (i * rayPixelWidth, (height / 2) - (columnLength / 2)))
+		#Draw column, each one will be centered vertically along screen.
+		screen.blit(textureColumn, (i * rayPixelWidth, (height / 2) - (columnLength / 2)))
 
-    #Render sprites and npcs
-    drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, currentLevel, doors)
+	#Render sprites and npcs
+	drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, currentLevel, doors)
 
-    #Render smoke cloud from barrel
-    if frameCount - currentWeapon.shotFrame <= 2 and frameCount - currentWeapon.shotFrame >= 0:
-        screen.blit(currentWeapon.boomList[frameCount - currentWeapon.shotFrame], (0, 60 + currentWeapon.yOffset))
-    
-    #Render Weapon
-    screen.blit(currentWeapon.currentSprite, (0,60 + currentWeapon.yOffset))
-    
+	#Render smoke cloud from barrel
+	if frameCount - currentWeapon.shotFrame <= 2 and frameCount - currentWeapon.shotFrame >= 0:
+		screen.blit(currentWeapon.boomList[frameCount - currentWeapon.shotFrame], (0, 60 + currentWeapon.yOffset))
+	
+	#Render Weapon
+	screen.blit(currentWeapon.currentSprite, (0,60 + currentWeapon.yOffset))
+	
 	#Draw UI
-    screen.blit(UI, (0,0))
-    
+	screen.blit(UI, (0,0))
+	
 	#Draw ammo count & health
-    ammoCountList = intToList(player.ammoCount[currentWeapon.ammoID])
-    healthCountList = intToList(player.hp)
-    
-    screen.blit(font[healthCountList[0]], (1 * UI_scaleX, height - (4 * UI_scaleY)))
-    screen.blit(font[healthCountList[1]], (3 * UI_scaleX, height - (4 * UI_scaleY)))
-    screen.blit(font[healthCountList[2]], (5 * UI_scaleX, height - (4 * UI_scaleY)))
+	if player.ammoCount[currentWeapon.ammoID] <= 999 and player.ammoCount[currentWeapon.ammoID] >= 0:
+		ammoCountList = intToList(player.ammoCount[currentWeapon.ammoID])
+	else:
+		ammoCountList = [9,9,9]
+	if player.hp <= 100 and player.hp >= 0:
+		healthCountList = intToList(player.hp)
+	else:
+		healthCountList = [0,0,0]
+	
+	screen.blit(font[healthCountList[0]], (1 * UI_scaleX, height - (4 * UI_scaleY)))
+	screen.blit(font[healthCountList[1]], (3 * UI_scaleX, height - (4 * UI_scaleY)))
+	screen.blit(font[healthCountList[2]], (5 * UI_scaleX, height - (4 * UI_scaleY)))
 
-    screen.blit(font[ammoCountList[0]], (width - (7 * UI_scaleX), height - (4 * UI_scaleY)))
-    screen.blit(font[ammoCountList[1]], (width - (5 * UI_scaleX), height - (4 * UI_scaleY)))
-    screen.blit(font[ammoCountList[2]], (width - (3 * UI_scaleX), height - (4 * UI_scaleY)))
+	screen.blit(font[ammoCountList[0]], (width - (7 * UI_scaleX), height - (4 * UI_scaleY)))
+	screen.blit(font[ammoCountList[1]], (width - (5 * UI_scaleX), height - (4 * UI_scaleY)))
+	screen.blit(font[ammoCountList[2]], (width - (3 * UI_scaleX), height - (4 * UI_scaleY)))
