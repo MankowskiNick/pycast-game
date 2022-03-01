@@ -11,6 +11,12 @@ Raycasting engine written in Python with the Pygame library.
 +Added weapons for AI enemies  
 +Added doors w/ opening/closing animations  
 +Cleaned up file structure  
++Animated enemies  
++Added support for a configuration file
++Upgraded minimap to show more detail  
++Added a red marker showing the spawn location of the player in the level editor  
++Added ability to easily change the spawn location in level editor by pressing 'u'  
++Added ability to remove any NPC from level editor  
 ### 1/19
 +Optimized LevelCreator.py  
 +Added fullscreen support(fullscreen option in Render.py)  
@@ -40,11 +46,6 @@ Initial Commit
 Below is a list of changes I intend to make, as of now, this is **all** that will be done before this project is considered "complete" and is to serve as a checklist.  This, of course, is tentative.  This list will be done mostly in order from top to bottom, starting with all of the intended technical changes.
 
 ## Upcoming technical changes
-###### 0% -Add support for configuration files
-###### 0% -Upgrade minimap to show more detail
-###### 0% -Implement a "spawn location" highlight in level editor.
-###### 0% -Add ability to remove NPCs/pickups from the level editor
-###### 0% -Implement support for creation of new, empty levels.
 ###### 0% -Add sound and music support
 ###### 0% -Add support for changing levels
 ###### 0% -Add support for menus
@@ -68,9 +69,7 @@ By default, the tile assigned at dictionary value spriteList[1] is the tile you 
 ### Saving levels
 Saving levels using MapGen.py will write level information to levels/[filename].leveldata.  Upon saving, you will be prompted to include a file name that you would like to save to.  Saving a file does **NOT** permanently patch it in to the engine and is intended only to store progress on a current level design.
 ### Opening levels
-Opening levels using MapGen.py will import level information from levels/[filename].leveldata.  Upon opening, you will be promped to include a file name you would like to open.  If this file does not exist, the request will be ignored.
-### Exporting levels
-Exporting a saved .leveldata file will semi-permanently patch that level in to the game through the LevelData.py file included. The in game level editor, accessible by pressing the m key, allows full customizable level creation.  In order to properly use the editing tool and patch levels in to the game, you **MUST** save the current map to a file and **THEN** it will allow you to patch saved files in to the engine.  Editing maps in the editor will appear if you quit the editor and return to the game, however these edits will not appear once the engine is closed unless the level is saved and exported.
+Opening levels using MapGen.py will import level information from levels/[filename].leveldata.  Upon opening, you will be promped to include a file name you would like to open.  If this file does not exist, the request will be ignored.  
 
 ## Controls
 ### pycast-game
@@ -82,6 +81,5 @@ Exporting a saved .leveldata file will semi-permanently patch that level in to t
 ###### Q - Exit in game level editor
 ###### O - Open from file
 ###### S - Save to file
-###### E - Export saved file to game. NOTE: Exporting unsaved levels is not currently supported.
 ###### Left click - place tile at mouse position
 ###### Right click - remove tile at mouse position

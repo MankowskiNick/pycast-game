@@ -1,4 +1,5 @@
-import math, sys, random
+import math, sys, random, pygame
+from pygame.locals import *
 from random import seed
 from random import randint
 
@@ -25,7 +26,37 @@ def getDoor(doors, coords):
 
 class NPC:
 	def __init__(self, coords, type, label, hp):
+
+		#Set the sprite for the object
 		
+		#Type = Object
+		if (type > 999 and type <= 1999):
+			self.defaultSprite = pygame.image.load("assets/object/" + str(type) + ".png")
+		
+		#Type = NPC
+		elif (type <= 2999):
+			self.defaultSprite = pygame.image.load("assets/npc/" + str(type) + "/alive/default.png")
+			self.deadSprite = pygame.image.load("assets/npc/" + str(type) + "/dead/default.png")
+			self.walkSprites = [pygame.image.load("assets/npc/" + str(type) + "/alive/step1.png"), pygame.image.load("assets/npc/" + str(type) + "/alive/step2.png")]
+			self.fireSprites = [pygame.image.load("assets/npc/" + str(type) + "/alive/fire1.png"), pygame.image.load("assets/npc/" + str(type) + "/alive/fire2.png"), pygame.image.load("assets/npc/" + str(type) + "/alive/fire3.png")]
+			self.fireDict = [0,1,2,1,0]
+		
+		#Type = Dead NPC
+		elif (type <= 3999):
+			self.defaultSprite = pygame.image.load("assets/npc/" + str(type - 1000) + "/dead/default.png")
+		
+		#Type = Pickup
+		elif (type <= 4999):
+			self.defaultSprite = pygame.image.load("assets/pickup/" + str(type) + ".png")
+		
+		self.currentSprite = self.defaultSprite
+
+		#Used for sprite animation things
+		self.lastFrameChange = 0
+		self.fireIndex = 0
+		self.shooting = False
+		self.canMove = True
+
 		#Define coords
 		self.coords = coords
 		self.x, self.y = coords
@@ -91,14 +122,39 @@ class NPC:
 		#Update the distance to the player
 		self.distToPlayer = math.sqrt(pow(player.x - self.x, 2) + pow(player.y - self.y, 2))
 
-
 		if (self.isActive and (not self.isObject) and self.isAlive):
+
+			#Animate walking
+			if (not self.shooting and self.lastFrameChange + 10 <= frameCount):
+				if (self.currentSprite == self.walkSprites[0]):
+					self.currentSprite = self.walkSprites[1]
+				else:
+					self.currentSprite = self.walkSprites[0]
+				self.lastFrameChange = frameCount
+
+			#Animate Shooting
+			if (self.shooting and frameCount - self.lastFrameChange >= 2):
+				self.fireIndex += 1
+				if (self.fireIndex < len(self.fireDict)):
+					self.currentSprite = self.fireSprites[self.fireDict[self.fireIndex]]
+					self.lastFrameChange = frameCount
+				else:
+					self.currentSprite = self.defaultSprite
+					self.shooting = False
+					self.fireIndex = 0
+					self.canMove = True
+				
+			#Take shot if shooting
 			if frameCount >= self.lastFrameShot + self.shotDelay:
 				seed(frameCount / 13 + player.x - self.hp * 987)
 				self.lastFrameShot = frameCount
 				chance = randint(0,100)
 				if chance <= 40:
 					self.weapon.Shoot(self, player, level, doors)
+					self.shooting = True
+					self.lastFrameChange = frameCount
+					self.currentSprite = self.fireSprites[self.fireDict[self.fireIndex]]
+					self.canMove = False
 
 		self.coords = self.x, self.y
 		xDist = 1
@@ -130,7 +186,7 @@ class NPC:
 			self.yDisp = self.stepSize * yDist / distTo
 			activateDist = 0.5
 
-			if (not self.wallDetect(level, doors) and self.npcDetect(npcList) == False and distTo > activateDist):
+			if (not self.wallDetect(level, doors) and self.npcDetect(npcList) == False and distTo > activateDist and self.canMove):
 				self.x += self.xDisp
 				self.y += self.yDisp
 			if (distTo < activateDist):
@@ -179,6 +235,7 @@ class NPC:
 	def die(self):
 		self.isAlive = False
 		self.type += 1000
+		self.currentSprite = self.deadSprite
 
 	def updateHitBox(self):
 		self.hitBox = [[self.x - 0.15, self.x + 0.15],[self.y - 0.15, self.y + 0.15]]

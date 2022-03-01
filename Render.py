@@ -1,4 +1,4 @@
-import pygame, sys, math
+import pygame, sys, math, configparser
 from pygame.locals import *
 from Sprites import *
 
@@ -13,29 +13,21 @@ red = (255,0,0)
 blue = (0,0,255)
 brown = (235, 143, 52)
 
-#Should we draw the minimap?
-drawMinimap = False
+#Create config parser to read in data from config files
+gfxConfig = configparser.ConfigParser()
 
-#Define screen size
-width = 800
-height = 600
+#Read data values from config file
+gfxConfig.read('gfx.conf')
+width = int(gfxConfig['WINDOW']['width'])
+height = int(gfxConfig['WINDOW']['height'])
+fullscreen = gfxConfig.getboolean('WINDOW', 'fullscreen')
+rayPixelWidth = int(gfxConfig['RENDER']['RayResolution'])
+spriteDimension = int(gfxConfig['RENDER']['SpriteDimension'])
+fov = int(gfxConfig['RENDER']['FOV']) * math.pi / 180
+blockSize = int(gfxConfig['MINIMAP']['MinimapBlockSize'])
+drawMinimap = gfxConfig.getboolean('MINIMAP', 'DrawMiniMap')
 
-#Fullscreen?
-fullscreen = False
-
-#How many pixels should one ray render?
-rayPixelWidth = 2
-
-#Define camera field of view in radians
-fov = 60 * math.pi / 180
-
-#Blocksize to render minimap
-blockSize = 10
-
-#Textures are all squares, what are their dimensions?
-spriteDimension = 16
-
-#Size Modifier, how large should the final image be rendered?
+#Scalar used to draw heights at the appropriate height
 sizeModifier = height * 3 / 4
 
 #Create a clock used for controlling framerates
@@ -52,6 +44,11 @@ pygame.display.set_caption("PyCasting")
 UI = pygame.image.load("assets/system/gui.png")
 UI_scaleX, UI_scaleY = width / UI.get_width(), height / UI.get_height()
 UI = pygame.transform.scale(UI, (width, height))
+
+minimapSprites = createSpriteList()
+for key in minimapSprites.keys():
+	minimapSprites[key] = pygame.transform.scale(minimapSprites[key], (blockSize, blockSize))
+
 
 #Toggle fullscreen if desired
 if fullscreen: pygame.display.toggle_fullscreen()
@@ -76,20 +73,16 @@ def Sort(vect):
 				vect[k], vect[k+1] = vect[k+1], vect[k]
 	return vect
 
-def drawOverlay(player, npcList, drawMap):
-
+def drawOverlay(player, screen, npcList, drawMap):
 	px, py, angle = player.x, player.y, player.angle
-	if drawMinimap:
+	if drawMinimap:	
+		pygame.draw.rect(screen, white, pygame.Rect(0, 0, len(drawMap[0]) * blockSize, len(drawMap) * blockSize))
 		for x in range(0,len(drawMap[0])):
 			for y in range(0,len(drawMap)):
 				if (drawMap[y][x] > 0 and drawMap[y][x] <= 999):
-					pygame.draw.rect(screen, black, pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize))
-				#elif  (drawMap[y][x] > 999):
-					#pygame.draw.circle(screen, black, (x * blockSize + blockSize / 2, y * blockSize + blockSize / 2), blockSize / 2)
-				else:
-					pygame.draw.rect(screen, white, pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
+					screen.blit(minimapSprites[drawMap[y][x]], (x * blockSize, y * blockSize))
 		for i in range(0,len(npcList)):
-			pygame.draw.circle(screen, blue,(npcList[i].x * blockSize, npcList[i].y * blockSize), 3)
+			screen.blit(pygame.transform.scale(npcList[i].currentSprite, (blockSize, blockSize)), ((npcList[i].x - 0.5) * blockSize, (npcList[i].y - 0.5) * blockSize))
 
 		pygame.draw.circle(screen, black,(px * blockSize, py * blockSize), 3)
 		pygame.draw.line(screen, black, (px * blockSize, py * blockSize), (px * blockSize + 8 * math.cos(angle), py * blockSize + 8 * math.sin(angle)))
@@ -674,7 +667,8 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 	for i in range(len(drawVect) - 1, -1, -1):
 		#pygame.draw.circle(screen, (0,255,0), (drawVect[i][0].x * blockSize, drawVect[i][0].y * blockSize), 5)
 		drawSize = sizeModifier / drawVect[i][1]
-		sprite = spriteList[drawVect[i][0].type]
+		#sprite = spriteList[drawVect[i][0].type]
+		sprite = drawVect[i][0].currentSprite
 
 		sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
 		xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
@@ -686,8 +680,8 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font, doors):
 	
 	#Draw background, ceiling and wall split in to two parts
-	pygame.draw.rect(screen, gray, (0, 0, width, height / 2))
-	pygame.draw.rect(screen, black, (0, height / 2, width, height / 2))
+	pygame.draw.rect(screen, black, (0, 0, width, height / 2))
+	pygame.draw.rect(screen, gray, (0, height / 2, width, height / 2))
 
 	#Cycle through eveny column of pixels on the screen and draw a column of the appropriate size for each
 	for i in range(0,int(width / rayPixelWidth)):
@@ -739,3 +733,6 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
 	screen.blit(font[ammoCountList[0]], (width - (7 * UI_scaleX), height - (4 * UI_scaleY)))
 	screen.blit(font[ammoCountList[1]], (width - (5 * UI_scaleX), height - (4 * UI_scaleY)))
 	screen.blit(font[ammoCountList[2]], (width - (3 * UI_scaleX), height - (4 * UI_scaleY)))
+
+	#Draw minimap
+	drawOverlay(player, screen, npcList, currentLevel)

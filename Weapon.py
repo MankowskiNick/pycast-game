@@ -1,10 +1,23 @@
-import math, NPC
+import math, NPC, configparser, sys
 
 def getDoor(doors, coords):
 	for i in range(0, len(doors)):
 		if math.sqrt(pow(doors[i].x + 0.5 - coords[0], 2) + pow(doors[i].y + 0.5 - coords[1], 2)) <= 0.8:
 			return i
 	return 0
+
+def createWeaponList(weapSpriteList, boomList):
+    weaponList = {}
+    cfg = configparser.ConfigParser()
+    cfg.read('gfx.conf')
+    for option in cfg['WEAPONS']:
+        print(option)
+        values = cfg['WEAPONS'][option].split(',')
+        for i in range(0, len(values)):
+            values[i] = int(values[i])
+        weaponList[int(option)] = Weapon(values[0], values[1], values[2], values[3], values[4], weapSpriteList[values[0]], boomList)
+        #Weapon(1, 25, 8, 4, 0, weaponSpriteList[1], boomList),
+    return weaponList
 
 class Weapon:
     def __init__(self, id, dmg, rng, sprd, ammoID, sprite, boomList):
@@ -304,7 +317,7 @@ class Weapon:
         #Verify that the player has ammo
         if player.ammoCount[self.ammoID] <= 0:
             return
-        else:
+        elif player.isAlive:
             player.ammoCount[self.ammoID] -= 1
 
             x, y, angle = player.x, player.y, player.angle

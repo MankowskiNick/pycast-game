@@ -17,14 +17,10 @@ boomList = createBoomList(width, height)
 weaponSpriteList = createWeapSpriteList(width, height)
 
 #Create weapon list
-weaponList = {
-	#Weapon parameters are as follows (id, damage, range, spread, ammo id, sprite, textures for weapon flash)
-	0 : Weapon(1, 25, 8, 4, 0, weaponSpriteList[1], boomList),
-	1 : Weapon(1, 50, 3.5, 20, 1, weaponSpriteList[2], boomList),
-}
+weaponList = createWeaponList(weaponSpriteList, boomList)
 
 #Load map and NPC list & delete values we don't need
-mapLevel, npcBigList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/level.leveldata")
+mapLevel, npcList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/level.leveldata")
 del tmp1, tmp2, tmp3
 
 #Load in doors
@@ -35,15 +31,15 @@ player = Camera.Camera(Format.findPlayer(mapLevel), 0)
 
 #Create a HIRs of the level
 levelHIR= NPC.HIRs(mapLevel)
-for i in range(0,len(npcBigList)):
-	npcBigList[i].giveHIR(levelHIR, player, mapLevel)
+for i in range(0,len(npcList)):
+	npcList[i].giveHIR(levelHIR, player, mapLevel)
 
 #Create font used to render numbers
 font = createFont(width, height)
 
 #What the currently selected weapon is
 #currentWeapon = weaponList[0]
-player.updateWeapon(weaponList[0])
+player.updateWeapon(weaponList[1])
 
 #Declare framecount
 frameCount = 0
@@ -52,14 +48,13 @@ frameCount = 0
 updateLabels = False
 
 #Define sensitivity
-sensitivity = 0.008
+sensitivity = 0.8
 
 #Set cursor to invisible
 pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 
 #Set the delay between key press repeats
 pygame.key.set_repeat(10,10)
-npcList = npcBigList
 while True:
 	frameCount+=1
 
@@ -67,7 +62,7 @@ while True:
 	clock.tick(144)
 
 	#Update NPCs
-	for i in range(0,len(npcBigList)):
+	for i in range(0,len(npcList)):
 		if npcList[i].walk(player, mapLevel, npcList, doors, frameCount):
 
 			#Cull the npc if it true
@@ -98,8 +93,8 @@ while True:
 
 			#Handle weapon selection
 			if len(weaponList) <= 9 and len(weaponList) > 0:
-				for i in range(0, len(weaponList)):
-					if event.key == i + 49:
+				for i in weaponList.keys():
+					if event.key == i + 48:
 						player.updateWeapon(weaponList[i])
 
 			#Move player according to key
@@ -107,7 +102,7 @@ while True:
 
 			#Open map if required
 			if event.key == pygame.K_m:
-				mapLevel, npcList = LevelCreator.Main(player.x, player.y, mapLevel, npcList)
+				mapLevel, npcList = LevelCreator.Main(player, mapLevel, npcList, levelHIR)
 				pygame.key.set_repeat(10,10)
 
 			#Check if the doors are opened
@@ -133,11 +128,8 @@ while True:
 	for door in doors:
 		door.update()
 
-	#Render Scenew
+	#Render Scene
 	Render.renderScene(player,  mapLevel, npcList, spriteList, player.weapon, frameCount, font, doors)
-
-	#Draw minimap
-	drawOverlay(player, npcList, mapLevel)
 
 	#Update frame
 	pygame.display.flip()

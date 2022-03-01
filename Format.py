@@ -16,7 +16,7 @@ def findPlayer(focusMap):
 	for x in range(0,len(focusMap[0])):
 		for y in range(0,len(focusMap)):
 			if focusMap[y][x] == -1:
-				focusMap[y][x] = 0
+				#focusMap[y][x] = 0
 				return x + 0.5,y + 0.5
 			else:
 				continue
