@@ -4,7 +4,7 @@ Raycasting engine written in Python with the Pygame library.
 ## Changelog
 ### 1/xx
 +Fixed bugs  
-+Changed system for loading levels, cutting reliance on LevelData.py and Map.py
++Changed system for loading levels, cutting reliance on LevelData.py and Map.py  
 +Added hallway mapping to assist enemy pathfinding  
 +Added HIRs mapping, creating a graph of the map to aid in pathfinding speed  
 +Added AI pathfinding  
@@ -12,11 +12,12 @@ Raycasting engine written in Python with the Pygame library.
 +Added doors w/ opening/closing animations  
 +Cleaned up file structure  
 +Animated enemies  
-+Added support for a configuration file
++Added support for a configuration file  
 +Upgraded minimap to show more detail  
 +Added a red marker showing the spawn location of the player in the level editor  
 +Added ability to easily change the spawn location in level editor by pressing 'u'  
 +Added ability to remove any NPC from level editor  
++Added sounds for doors, guns, and pickups  
 ### 1/19
 +Optimized LevelCreator.py  
 +Added fullscreen support(fullscreen option in Render.py)  
@@ -46,7 +47,6 @@ Initial Commit
 Below is a list of changes I intend to make, as of now, this is **all** that will be done before this project is considered "complete" and is to serve as a checklist.  This, of course, is tentative.  This list will be done mostly in order from top to bottom, starting with all of the intended technical changes.
 
 ## Upcoming technical changes
-###### 0% -Add sound and music support
 ###### 0% -Add support for changing levels
 ###### 0% -Add support for menus
 ###### 0% -Add documentation for adding new things to engine(wall textures, objects, npcs, pickups, weapons)

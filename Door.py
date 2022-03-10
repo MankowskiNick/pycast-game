@@ -1,4 +1,5 @@
-import math
+import math, Sound
+from Sound import *
 
 def findDoors(level):
     doors = [Door([-1, -1])]
@@ -29,6 +30,7 @@ class Door:
         self.offset = 0
 
     def activate(self, frameCount):
+        Sound.Door_Sound()
         if frameCount >= self.lastOpenedFrame + 64:
             self.lastOpenedFrame = frameCount
             if self.isOpen:

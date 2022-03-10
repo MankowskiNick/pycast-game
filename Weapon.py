@@ -1,4 +1,5 @@
-import math, NPC, configparser, sys
+import math, NPC, Sound, configparser, sys
+from Sound import *
 
 def getDoor(doors, coords):
 	for i in range(0, len(doors)):
@@ -318,6 +319,9 @@ class Weapon:
         if player.ammoCount[self.ammoID] <= 0:
             return
         elif player.isAlive:
+
+            Sound.Shoot_Sound(self.id)
+
             player.ammoCount[self.ammoID] -= 1
 
             x, y, angle = player.x, player.y, player.angle

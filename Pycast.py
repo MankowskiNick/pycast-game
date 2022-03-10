@@ -98,7 +98,7 @@ while True:
 						player.updateWeapon(weaponList[i])
 
 			#Move player according to key
-			player.movePlayer(event.key, mapLevel, doors)
+			player.movePlayer(event.key, mapLevel, doors, npcList)
 
 			#Open map if required
 			if event.key == pygame.K_m:

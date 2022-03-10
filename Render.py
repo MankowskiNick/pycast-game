@@ -669,12 +669,12 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 		drawSize = sizeModifier / drawVect[i][1]
 		#sprite = spriteList[drawVect[i][0].type]
 		sprite = drawVect[i][0].currentSprite
-
-		sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
-		xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
-		xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
-		xPos = (xDisp / xRange) * width
-		screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
+		if drawSize < width * 2:
+			sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
+			xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
+			xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
+			xPos = (xDisp / xRange) * width
+			screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
 
 #Render the scene given the player coords & level
 def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font, doors):
@@ -707,7 +707,7 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
 	drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, currentLevel, doors)
 
 	#Render smoke cloud from barrel
-	if frameCount - currentWeapon.shotFrame <= 2 and frameCount - currentWeapon.shotFrame >= 0:
+	if frameCount - currentWeapon.shotFrame <= 2 and frameCount - currentWeapon.shotFrame >= 0 and currentWeapon.id != 0:
 		screen.blit(currentWeapon.boomList[frameCount - currentWeapon.shotFrame], (0, 60 + currentWeapon.yOffset))
 	
 	#Render Weapon

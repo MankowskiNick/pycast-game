@@ -1,4 +1,4 @@
-import math, sys, random, pygame
+import math, sys, random, pygame, Sound
 from pygame.locals import *
 from random import seed
 from random import randint
@@ -261,6 +261,7 @@ class NPC:
 		if self.type < 4000:
 			return False
 		else:
+			Sound.Pickup_Sound(self.type)
 			if self.type == 4000:
 				return player.addHealth(15)
 			elif self.type == 4001:
@@ -802,4 +803,5 @@ class NPCWeapon:
 		distToPlayer = math.sqrt(pow(player.x - enemy.x, 2) + pow(player.y - enemy.y, 2))
 		distToWall = self.checkWallDist(player, enemy, level, doors)
 		if distToPlayer < distToWall and distToPlayer <= self.range:
+			Sound.Shoot_Sound(1)
 			player.takeDamage(self.damage)

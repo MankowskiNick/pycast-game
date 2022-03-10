@@ -1,4 +1,4 @@
-import math
+import math, Sound
 
 #Get the door nearest to the player
 def getDoor(doors, coords):
@@ -22,13 +22,14 @@ class Camera:
 		self.ammoCount = [
 			32,
 			12,
+			99999999999999999,
 		]
 
 		#Define camera sensitivity & movement speed
 		self.turnAdjust = math.pi / 64
 		self.movementSpeed = 0.05
 
-	def movePlayer(self, key, level, doors):
+	def movePlayer(self, key, level, doors, npcList):
 
 		#If the player is alive, allow movement
 		if self.isAlive:
@@ -64,6 +65,7 @@ class Camera:
 
 			#Check for collisions
 			self.wallDetect(level, doors)
+			self.npcDetect(npcList)
 
 	def wallDetect(self, level, doors):
 
@@ -119,6 +121,16 @@ class Camera:
 				self.x += self.movementSpeed * math.sin(self.angle)
 				self.y -= self.movementSpeed * math.cos(self.angle)
 	
+	def npcDetect(self, npcList):
+		for npc in npcList:
+			if (npc.distToPlayer < 0.3 and npc.distToPlayer > 0):
+				angleToNPC = math.tan((npc.y - self.y) / (npc.x - self.x))
+				xScale = (npc.x - self.x) / npc.distToPlayer
+				yScale = (npc.y - self.y) / npc.distToPlayer
+
+				self.x -= xScale * 0.2
+				self.y -= yScale * 0.2
+
 	#This will be called by a pickup being activated
 	def addHealth(self, hp):
 
