@@ -649,7 +649,7 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 			angleDiff -= math.pi * 2
 
 		#If the difference in angle falls within the FOV
-		if abs(angleDiff) <= fov / 2:
+		if abs(angleDiff) <= fov / 1.5:
 			
 			#Calculate obj dist and the distance to the nearest wall
 			distToObj = math.sqrt(pow(npcList[i].x - x, 2) + pow(npcList[i].y - y, 2))
@@ -657,7 +657,7 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 
 			#If the object is closer than the nearest wall, add to draw vector
 			if distToWall > distToObj:
-				drawVect.append([npcList[i], distToObj, angleDiff + (fov / 2)])
+				drawVect.append([npcList[i], distToObj, angleDiff])
 				npcList[i].setActive()
 
 	#Sort things by how close they are
@@ -665,15 +665,13 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 
 	#Render them in order from furthest to closest, closest being draw on top
 	for i in range(len(drawVect) - 1, -1, -1):
-		#pygame.draw.circle(screen, (0,255,0), (drawVect[i][0].x * blockSize, drawVect[i][0].y * blockSize), 5)
 		drawSize = sizeModifier / drawVect[i][1]
-		#sprite = spriteList[drawVect[i][0].type]
 		sprite = drawVect[i][0].currentSprite
 		if drawSize < width * 2:
 			sprite = pygame.transform.scale(sprite, (drawSize, drawSize))
 			xDisp = drawVect[i][1] * math.sin(drawVect[i][2])
 			xRange = 2 * drawVect[i][1] * math.sin(fov / 2)
-			xPos = (xDisp / xRange) * width
+			xPos = ((xDisp / xRange) * width) + (width / 2)
 			screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
 
 #Render the scene given the player coords & level
