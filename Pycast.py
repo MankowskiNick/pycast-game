@@ -47,7 +47,7 @@ frameCount = 0
 updateLabels = False
 
 #Define sensitivity
-sensitivity = 0.8
+sensitivity = 0.08
 
 #Set cursor to invisible
 pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
