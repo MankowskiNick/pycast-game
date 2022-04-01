@@ -169,6 +169,7 @@ class NPC:
 			yDist = player.y - self.y
 		
 		distTo = math.sqrt(pow(xDist, 2) + pow(yDist, 2))
+		self.wallDetect(level, doors)
 		if (self.isActive and (not self.isObject) and self.isAlive and self.distToPlayer > 0.5):
 			
 			#add counter and give like 5 frames before we can recount
@@ -207,13 +208,11 @@ class NPC:
 		doorID = getDoor(doors, [self.x + self.xDisp, self.y + self.yDisp])
 		
 		if (level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] > 0 and level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] <= 899) or (level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] > 899 and level[int(self.y + self.yDisp)][int(self.x + self.xDisp)] <= 999 and (not doors[doorID].isOpen) and (not doorID == 0)):
-			doorID = getDoor(doors, [self.x + self.xDisp, self.y])
+			doorID = getDoor(doors, [self.x + self.xDisp, self.y + self.y + self.yDisp])
 			if (level[int(self.y)][int(self.x + self.xDisp)] == 0) or (level[int(self.y)][int(self.x + self.xDisp)] > 899 and level[int(self.y)][int(self.x + self.xDisp)] <= 999 and (doors[doorID].isOpen) and (not doorID == 0)):
 				self.yDisp = 0
-			doorID = getDoor(doors, [self.x, self.y + self.yDisp])
-			if (level[int(self.y + self.yDisp)][int(self.x)] == 0) or (level[int(self.y + self.yDisp)][int(self.x)] > 899 and level[int(self.y + self.yDisp)][int(self.x)] <= 999 and (doors[doorID].isOpen) and (not doorID == 0)):
+			elif (level[int(self.y + self.yDisp)][int(self.x)] == 0) or (level[int(self.y + self.yDisp)][int(self.x)] > 899 and level[int(self.y + self.yDisp)][int(self.x)] <= 999 and (doors[doorID].isOpen) and (not doorID == 0)):
 				self.xDisp = 0
-			return False
 		return False
 
 	def npcDetect(self, npcList):
@@ -531,15 +530,12 @@ class HIRs:
 				coord1 = self.rooms[roomPath[pos - 1]].getIntersectionCoords(roomPath[pos])
 				coord2 = self.rooms[roomPath[pos]].getIntersectionCoords(roomPath[pos + 1])
 
-				#print(coord1, coord2)
 				currentX, currentY = coord1[0], coord1[1]
 				stepX, stepY = (coord2[0] - coord1[0]) / resolution, (coord2[1] - coord1[1]) / resolution
 				for i in range(0,resolution):
 					currentX += stepX
 					currentY += stepY
 					if (self.level[int(currentY)][int(currentX)] == 0 or self.level[int(currentY)][int(currentX)] >= 2000):
-						#self.level[int(currentY)][int(currentX)] = 999
-						#phantomList.append(Phantom(int(currentX), int(currentY)))
 						phantomList.append([int(currentX), int(currentY)])
 
 			return self.getMaze(roomPath, pos + 1, phantomList)
@@ -804,6 +800,7 @@ class NPCWeapon:
 	def Shoot(self, enemy, player, level, doors):
 		distToPlayer = math.sqrt(pow(player.x - enemy.x, 2) + pow(player.y - enemy.y, 2))
 		distToWall = self.checkWallDist(player, enemy, level, doors)
+
 		if distToPlayer < distToWall and distToPlayer <= self.range:
 			#Sound.Shoot_Sound(1)
 			player.takeDamage(self.damage)

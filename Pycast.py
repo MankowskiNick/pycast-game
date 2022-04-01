@@ -47,7 +47,7 @@ frameCount = 0
 updateLabels = False
 
 #Define sensitivity
-sensitivity = 0.08
+sensitivity = 0.8
 
 #Set cursor to invisible
 pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
@@ -56,9 +56,6 @@ pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 pygame.key.set_repeat(10,10)
 while True:
 	frameCount+=1
-
-	#player.angle += 0.01
-	#player.angle -= 0.01
 
 	#Set framerate
 	clock.tick(144)

@@ -41,9 +41,11 @@ screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("PyCasting")
 
 #Load UI
-UI = pygame.image.load("assets/system/gui.png")
-UI_scaleX, UI_scaleY = width / UI.get_width(), height / UI.get_height()
-UI = pygame.transform.scale(UI, (width, height))
+UI_scaleX, UI_scaleY = width / 64, height / 48
+ammo_tray = pygame.image.load("assets/system/ammo_tray.png")
+hp_tray = pygame.image.load("assets/system/hp_tray.png")
+ammo_tray = pygame.transform.scale(ammo_tray, (UI_scaleX * 17, UI_scaleY * 17))
+hp_tray = pygame.transform.scale(hp_tray, (UI_scaleX * 17, UI_scaleY * 17))
 
 minimapSprites = createSpriteList()
 for key in minimapSprites.keys():
@@ -75,6 +77,7 @@ def Sort(vect):
 
 def drawOverlay(player, screen, npcList, drawMap):
 	px, py, angle = player.x, player.y, player.angle
+	
 	if drawMinimap:	
 		pygame.draw.rect(screen, white, pygame.Rect(0, 0, len(drawMap[0]) * blockSize, len(drawMap) * blockSize))
 		for x in range(0,len(drawMap[0])):
@@ -86,7 +89,7 @@ def drawOverlay(player, screen, npcList, drawMap):
 
 		pygame.draw.circle(screen, black,(px * blockSize, py * blockSize), 3)
 		pygame.draw.line(screen, black, (px * blockSize, py * blockSize), (px * blockSize + 8 * math.cos(angle), py * blockSize + 8 * math.sin(angle)))
-
+	
 
 	#Display FPS on Screen
 	fps = font.render(str(int(clock.get_fps())) + " FPS (" + str(px) + " , " + str(py) + ") : " + str(player.angle), True, white)
@@ -714,7 +717,8 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
 	screen.blit(currentWeapon.currentSprite, (0,60 + currentWeapon.yOffset))
 	
 	#Draw UI
-	screen.blit(UI, (0,0))
+	screen.blit(hp_tray, (0, 31 * UI_scaleY))
+	screen.blit(ammo_tray, (47 * UI_scaleX, 31 * UI_scaleY))
 	
 	#Draw ammo count & health
 	if player.ammoCount[currentWeapon.ammoID] <= 999 and player.ammoCount[currentWeapon.ammoID] >= 0:
@@ -736,3 +740,4 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
 
 	#Draw minimap
 	drawOverlay(player, screen, npcList, currentLevel)
+	
