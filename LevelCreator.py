@@ -330,10 +330,10 @@ def Main(player, currentMap, npcList, levelHIR):
                     #Are we not placing an entity on top of another?
                     if canPlace:
                         if currentBlockID < 1000:
-                            currentMap[mapY][mapX] = currentBlockID
+                            currentMap[int(mapY)][int(mapX)] = currentBlockID
                         elif currentBlockID < 2000:
                             npcList.append(NPC.NPC((mapX, mapY), currentBlockID, len(npcList), 100))
-                            currentMap[mapY][mapX] = currentBlockID
+                            currentMap[int(mapY)][int(mapX)] = currentBlockID
                         elif currentBlockID > 1999:
                             npcList.append(NPC.NPC((mapX, mapY), currentBlockID, len(npcList), 100))
                             npcList[len(npcList) - 1].giveHIR(levelHIR, player, currentMap)

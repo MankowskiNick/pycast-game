@@ -36,9 +36,9 @@ class Camera:
 
 			#Check to ensure that degree is not overshot past 2pi or 0
 			if self.angle > math.pi * 2:
-				self.angle = 0 + self.turnAdjust
+				self.angle = self.angle - (math.pi * 2)# + self.turnAdjust
 			elif self.angle < 0:
-				self.angle = math.pi * 2 - self.turnAdjust
+				self.angle = self.angle + (math.pi * 2)# - self.turnAdjust
 
 			#W key, fordward
 			if key == 119:
@@ -123,13 +123,20 @@ class Camera:
 	
 	def npcDetect(self, npcList):
 		for npc in npcList:
-			if (npc.distToPlayer < 0.3 and npc.distToPlayer > 0):
+			if (npc.distToPlayer < 0.3 and npc.distToPlayer > 0 and npc.isAlive):
 				angleToNPC = math.tan((npc.y - self.y) / (npc.x - self.x))
 				xScale = (npc.x - self.x) / npc.distToPlayer
 				yScale = (npc.y - self.y) / npc.distToPlayer
 
 				self.x -= xScale * 0.2
 				self.y -= yScale * 0.2
+
+	def updateAngle(self, mouseX, width, sensitivity):
+		self.angle -= (width / 2 - mouseX) / (width * (1 / sensitivity))
+		if (self.angle > math.pi * 2):
+			self.angle -= math.pi * 2
+		elif (self.angle < 0):
+			self.angle += math.pi * 2
 
 	#This will be called by a pickup being activated
 	def addHealth(self, hp):
@@ -145,12 +152,15 @@ class Camera:
 			self.hp -= hp
 			return False
 		elif self.hp > 100:
+			Sound.Pickup_Sound(4000)
 			self.hp = 100
 			return True
 		else:
+			Sound.Pickup_Sound(4000)
 			return True
 	
 	def addAmmo(self, count):
+		Sound.Pickup_Sound(4001)
 		for i in range(0,len(self.ammoCount)):
 			self.ammoCount[i] += count
 	

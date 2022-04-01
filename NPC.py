@@ -114,6 +114,7 @@ class NPC:
 
 		#Define npc as not active, npc hasnt been seen
 		self.deActivate()
+		#self.setActive()
 		
 		#stored as [[x0,x1],[y0,y1]]
 		self.updateHitBox()
@@ -151,6 +152,7 @@ class NPC:
 				chance = randint(0,100)
 				if chance <= 40:
 					self.weapon.Shoot(self, player, level, doors)
+					Sound.Shoot_Sound(1)
 					self.shooting = True
 					self.lastFrameChange = frameCount
 					self.currentSprite = self.fireSprites[self.fireDict[self.fireIndex]]
@@ -218,7 +220,7 @@ class NPC:
 		for npc in npcList:
 			if (not npc == self) and npc.isAlive:
 				distTo = math.sqrt(pow(self.x - npc.x, 2) + pow(self.y - npc.y, 2))
-				if distTo < 0.3:
+				if (distTo < 0.3 and npc.x - self.x != 0):
 					currentAngle = math.atan((npc.y - self.y) / (npc.x - self.x))
 					self.x -= self.stepSize * (npc.x - self.x)
 					self.y -= self.stepSize * (npc.y - self.y)
@@ -261,7 +263,7 @@ class NPC:
 		if self.type < 4000:
 			return False
 		else:
-			Sound.Pickup_Sound(self.type)
+			#Sound.Pickup_Sound(self.type)
 			if self.type == 4000:
 				return player.addHealth(15)
 			elif self.type == 4001:
@@ -803,5 +805,5 @@ class NPCWeapon:
 		distToPlayer = math.sqrt(pow(player.x - enemy.x, 2) + pow(player.y - enemy.y, 2))
 		distToWall = self.checkWallDist(player, enemy, level, doors)
 		if distToPlayer < distToWall and distToPlayer <= self.range:
-			Sound.Shoot_Sound(1)
+			#Sound.Shoot_Sound(1)
 			player.takeDamage(self.damage)

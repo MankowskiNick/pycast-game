@@ -5,7 +5,6 @@ from pygame.locals import *
 #Import custom libraries
 import Render, Format, Camera, NPC, LevelCreator, Sprites, Weapon, Door
 from Render import *
-from Sprites import *
 from Weapon import *
 
 #Initialize pygame
@@ -58,6 +57,9 @@ pygame.key.set_repeat(10,10)
 while True:
 	frameCount+=1
 
+	#player.angle += 0.01
+	#player.angle -= 0.01
+
 	#Set framerate
 	clock.tick(144)
 
@@ -108,12 +110,6 @@ while True:
 			#Check if the doors are opened
 			elif event.key == pygame.K_SPACE:
 				Door.openDoor(doors, [player.x, player.y], frameCount)
-
-		#Move mouse and adjust camera angle accordingly
-		elif event.type == MOUSEMOTION:
-			player.angle -= (width / 2 - pygame.mouse.get_pos()[0]) / (width * (1 / sensitivity))
-
-			pygame.mouse.set_pos(width / 2, height / 2)
 		
 		#Get state of mousebutton to determine whether to shoot or not
 		elif event.type == MOUSEBUTTONDOWN:
@@ -121,6 +117,10 @@ while True:
 			if mouseAction[0]:
 				player.weapon.Shoot(player, npcList, mapLevel, frameCount, doors)
 
+	#Adjust camera angle to be dependent on mouse pos	
+	player.updateAngle(pygame.mouse.get_pos()[0], width, sensitivity)
+	pygame.mouse.set_pos(width / 2, height / 2)
+	
 	#Animate weapon
 	player.weapon.Animate(frameCount)
 	

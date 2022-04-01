@@ -89,7 +89,9 @@ def drawOverlay(player, screen, npcList, drawMap):
 
 
 	#Display FPS on Screen
-	fps = font.render(str(int(clock.get_fps())) + " FPS (" + str(px) + " , " + str(py) + ")", True, white)
+	fps = font.render(str(int(clock.get_fps())) + " FPS (" + str(px) + " , " + str(py) + ") : " + str(player.angle), True, white)
+	#fps = font.render(str(int(clock.get_fps())) + "  (" + str(px) + " , " + str(py) + ")", True, white)
+
 	screen.blit(fps, (0, height - 150))
 
 def getDoor(doors, coords):
@@ -432,7 +434,7 @@ def checkWallDist(px, py, angle, level, doors):
 
 	#Calculate the change in x to the next integer from the starting position, as well as the change in x afterwards
 	#If statement to verify that there will not be a divide by zero error
-	if math.tan(rayAng != 0):
+	if math.tan(rayAng) != 0:
 		cX = cY / math.tan(rayAng)
 		dX = dY / math.tan(rayAng)
 
@@ -636,7 +638,7 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 
 		#Calculate difference between object angle and camera facing
 		angleDiff = objAngleFromOrig - angle
-
+		
 		#Adjust values accordingly to fall within trig parameters
 		while objAngleFromOrig > math.pi * 2:
 			objAngleFromOrig -= math.pi * 2
