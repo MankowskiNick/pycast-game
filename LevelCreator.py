@@ -12,24 +12,29 @@ def createEmptyMap():
     mHeight = 50
 
     #Declare empty map variable
-    currentMap = []
+    level_floors = []
+    level_walls = []
+    level_ceiling = []
 
     #Fill map with empty space
     for y in range(0,mHeight):
         temp = []
         for x in range(0,mWidth):
             temp.append(0)
-        currentMap.append(temp)
+        level_floors.append(temp)
+        level_walls.append(temp)
+        level_ceiling.append(temp)
+        
 
     #Create walls for a border
     for y in range(0, mHeight):
-        currentMap[y][0] = 1
-        currentMap[y][mWidth - 1] = 1
+        level_walls[y][0] = 1
+        level_walls[y][mWidth - 1] = 1
     for x in range(0, mWidth):
-        currentMap[0][x] = 1
-        currentMap[mHeight - 1][x] = 1
-
-    return currentMap
+        level_walls[0][x] = 1
+        level_walls[mHeight - 1][x] = 1
+    level = Level.Level(level_floors, level_walls, level_ceiling)
+    return level
 
 def updateSpawnLocation(player, level):
     wall_level = level.getWallMap()
@@ -316,18 +321,15 @@ def Main(player, level, npcList, levelHIR):
                 elif event.key == K_e:
                     currentlyTyping = True
                     actionType = "Export file: "
-                    '''
-                    this isn't gonna work for a bit, ill come back to it
-                    remember to unindent when uncommenting
-                    #New map creation event
-                    elif event.key == K_n:
-                        currentMap = createEmptyMap()
-                        npcList = []
-                        mapWidth, mapHeight = getMapDimensions(currentMap)
-                        blockSize = getBlocksize(mapWidth, mapHeight, width, height)
-                        for i in range(0,len(spriteLookUpTable)):
-                            mapSpriteList[spriteLookUpTable[i]] = pygame.transform.scale(mapSpriteList[spriteLookUpTable[i]], (blockSize, blockSize))
-                    '''   
+                
+                #New map creation event
+                elif event.key == K_n:
+                    level = createEmptyMap()
+                    npcList = []
+                    mapWidth, mapHeight = getMapDimensions(level)
+                    blockSize = getBlocksize(mapWidth, mapHeight, width, height)
+                    for i in range(0,len(spriteLookUpTable)):
+                        mapSpriteList[spriteLookUpTable[i]] = pygame.transform.scale(mapSpriteList[spriteLookUpTable[i]], (blockSize, blockSize))
                 elif event.key == K_u:
                     currentMap = updateSpawnLocation(player, currentMap)
                 
