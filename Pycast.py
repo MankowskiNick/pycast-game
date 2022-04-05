@@ -117,11 +117,11 @@ while True:
 			if mouseAction[0]:
 				player.weapon.Shoot(player, npcList, level.getWallMap(), frameCount, doors)
 
-	#Adjust camera angle to be dependent on mouse pos	
+	#Adjust camera angle tso be dependent on mouse pos	
 	player.updateAngle(pygame.mouse.get_pos()[0], width, sensitivity)
 	pygame.mouse.set_pos(width / 2, height / 2)
 	
-	#Animate weapon
+	#Animate weapons
 	player.weapon.Animate(frameCount)
 	
 	#Update door animations
@@ -129,7 +129,7 @@ while True:
 		door.update()
 
 	#Render Scene
-	Render.renderScene(player,  level.getWallMap(), npcList, spriteList, player.weapon, frameCount, font, doors)
+	Render.renderScene(player,  level, npcList, spriteList, player.weapon, frameCount, font, doors)
 
 	#Update frame
 	pygame.display.flip()

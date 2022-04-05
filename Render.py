@@ -28,7 +28,7 @@ blockSize = int(gfxConfig['MINIMAP']['MinimapBlockSize'])
 drawMinimap = gfxConfig.getboolean('MINIMAP', 'DrawMiniMap')
 
 #Scalar used to draw heights at the appropriate height
-sizeModifier = height * 3 / 4
+sizeModifier = height# * 3 / 4
 
 #Create a clock used for controlling framerates
 clock = pygame.time.Clock()
@@ -55,6 +55,10 @@ for key in minimapSprites.keys():
 #Toggle fullscreen if desired
 if fullscreen: pygame.display.toggle_fullscreen()
 
+#find aspect ratio of screen
+divisor = math.gcd(width, height)
+aspectRatio = [int(width / divisor), int(height / divisor)]
+verticalFOV = aspectRatio[1] * (fov / aspectRatio[0])
 
 #Convert int to list representing 3 digits
 def intToList(n):
@@ -380,7 +384,7 @@ def castRay(px, py, angle, currentLevel, spriteList, doors):
 		ty = vy
 
 		#Calculate pixel offset for image, what column of pixels will we have to render?
-		pixelOffset = (spriteDimension * (ty - int(ty)))
+		pixelOffset = int(spriteDimension * (ty - int(ty)))
 
 	#Draws the FOV of the player in red
 	#pygame.draw.line(screen, red, (px * blockSize, py * blockSize), (blockSize * (px + drawDist*math.cos(rayAng)), blockSize * (py + drawDist*math.sin(rayAng))))
@@ -397,6 +401,35 @@ def castRay(px, py, angle, currentLevel, spriteList, doors):
 		return sizeModifier / drawDist, wallTexture
 	else:
 		return 0, wallTexture
+
+
+def drawFloor(player, angle, floor_map, ceiling_map, columnLength, xBlit, spriteList):
+	bottomAngle = aspectRatio[1] * (fov / aspectRatio[0])
+
+	distToWall = sizeModifier / columnLength
+
+	bottomOfWall = (height / 2) - (columnLength / 2)
+
+	topAngle = math.atan(0.5 / distToWall)
+
+	currentAngle = topAngle
+	angleDiff = int(math.sqrt(rayPixelWidth)) * (bottomAngle - topAngle) / bottomOfWall
+	print(int(bottomOfWall / int(math.sqrt(rayPixelWidth))))
+	for i in range(0, int(bottomOfWall / int(math.sqrt(rayPixelWidth)))): # change this to a constant # rather than one per so many pixels? 30 would be SWEET
+		currentAngle += angleDiff
+
+		distToGround = 0.5 / math.tan(currentAngle)
+
+		x, y = player.x + (distToGround * math.cos(angle)), player.y + (distToGround * math.sin(angle))
+		if floor_map[int(y)][int(x)] > 0:
+			spriteX, spriteY = int(spriteDimension * (x - int(x))), int(spriteDimension * (y - int(y)))
+			floor_sprite = pygame.transform.scale(spriteList[floor_map[int(y)][int(x)]].subsurface((spriteX, spriteY, 1, 1)), (rayPixelWidth, int(math.sqrt(rayPixelWidth))))
+			ceiling_sprite = pygame.transform.scale(spriteList[ceiling_map[int(y)][int(x)]].subsurface((spriteX, spriteY, 1, 1)), (rayPixelWidth, int(math.sqrt(rayPixelWidth))))
+
+			screen.blit(floor_sprite, (xBlit, columnLength + bottomOfWall + (i*int(math.sqrt(rayPixelWidth)))))
+			screen.blit(ceiling_sprite, (xBlit,  bottomOfWall - (i*int(math.sqrt(rayPixelWidth)))))
+
+
 
 #Raycast check wall(simple, not a lot of checks)
 def checkWallDist(px, py, angle, level, doors):
@@ -680,11 +713,14 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 			screen.blit(sprite, (xPos - sprite.get_width() / 2, (height / 2) - (sprite.get_height() / 2) ))
 
 #Render the scene given the player coords & level
-def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameCount, font, doors):
+def renderScene(player, level, npcList, spriteList, currentWeapon, frameCount, font, doors):
 	
 	#Draw background, ceiling and wall split in to two parts
 	pygame.draw.rect(screen, black, (0, 0, width, height / 2))
 	pygame.draw.rect(screen, gray, (0, height / 2, width, height / 2))
+
+	floor_map = level.getFloorMap()
+	ceiling_map = level.getCeilingMap()
 
 	#Cycle through eveny column of pixels on the screen and draw a column of the appropriate size for each
 	for i in range(0,int(width / rayPixelWidth)):
@@ -698,7 +734,7 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
 			currentAngle += 2 * math.pi
 
 		#Define column length so that out draw function looks better
-		enviroRenderOutput = castRay(player.x, player.y, currentAngle, currentLevel, spriteList, doors)
+		enviroRenderOutput = castRay(player.x, player.y, currentAngle, level.getWallMap(), spriteList, doors)
 
 		#Disassemble output tuple
 		columnLength, textureColumn = enviroRenderOutput
@@ -706,8 +742,11 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
 		#Draw column, each one will be centered vertically along screen.
 		screen.blit(textureColumn, (i * rayPixelWidth, (height / 2) - (columnLength / 2)))
 
+		#Draw walls
+		drawFloor(player, currentAngle, floor_map, ceiling_map, columnLength, i * rayPixelWidth, spriteList)
+
 	#Render sprites and npcs
-	drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, currentLevel, doors)
+	drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, level.getWallMap(), doors)
 
 	#Render smoke cloud from barrel
 	if frameCount - currentWeapon.shotFrame <= 2 and frameCount - currentWeapon.shotFrame >= 0 and currentWeapon.id != 0:
@@ -739,5 +778,4 @@ def renderScene(player, currentLevel, npcList, spriteList, currentWeapon, frameC
 	screen.blit(font[ammoCountList[2]], (width - (3 * UI_scaleX), height - (4 * UI_scaleY)))
 
 	#Draw minimap
-	drawOverlay(player, screen, npcList, currentLevel)
-	
+	drawOverlay(player, screen, npcList, level.getWallMap())
