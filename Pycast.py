@@ -3,7 +3,7 @@ import pygame, sys, math
 from pygame.locals import *
 
 #Import custom libraries
-import Render, Format, Camera, NPC, LevelCreator, Sprites, Weapon, Door
+import Render, Format, Camera, NPC, LevelCreator, Sprites, Weapon, Door, Level
 from Render import *
 from Weapon import *
 
@@ -19,19 +19,21 @@ weaponSpriteList = createWeapSpriteList(width, height)
 weaponList = createWeaponList(weaponSpriteList, boomList)
 
 #Load map and NPC list & delete values we don't need
-mapLevel, npcList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/level.leveldata")
+level, npcList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/level.leveldata")
+#level = Level.Level(wall_level)
+
 del tmp1, tmp2, tmp3
 
 #Load in doors
-doors = Door.findDoors(mapLevel)
+doors = Door.findDoors(level.getWallMap())
 
 #Create player olbject with coords found by findPlayer
-player = Camera.Camera(Format.findPlayer(mapLevel), 0)
+player = Camera.Camera(Format.findPlayer(level.getWallMap()), 0)
 
 #Create a HIRs of the level
-levelHIR= NPC.HIRs(mapLevel)
+levelHIR= NPC.HIRs(level.getWallMap())
 for i in range(0,len(npcList)):
-	npcList[i].giveHIR(levelHIR, player, mapLevel)
+	npcList[i].giveHIR(levelHIR, player, level.getWallMap())
 
 #Create font used to render numbers
 font = createFont(width, height)
@@ -56,13 +58,13 @@ pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 pygame.key.set_repeat(10,10)
 while True:
 	frameCount+=1
-	
+
 	#Set framerate
 	clock.tick(144)
 
 	#Update NPCs
 	for i in range(0,len(npcList)):
-		if npcList[i].walk(player, mapLevel, npcList, doors, frameCount):
+		if npcList[i].walk(player, level.getWallMap(), npcList, doors, frameCount):
 
 			#Cull the npc if it true
 			npcList.pop(i)
@@ -97,11 +99,12 @@ while True:
 						player.updateWeapon(weaponList[i])
 
 			#Move player according to key
-			player.movePlayer(event.key, mapLevel, doors, npcList)
+			player.movePlayer(event.key, level.getWallMap(), doors, npcList)
 
 			#Open map if required
 			if event.key == pygame.K_m:
-				mapLevel, npcList = LevelCreator.Main(player, mapLevel, npcList, levelHIR)
+				level, npcList = LevelCreator.Main(player, level, npcList, levelHIR)
+				#level.setWallMap(wall_level)
 				pygame.key.set_repeat(10,10)
 
 			#Check if the doors are opened
@@ -112,7 +115,7 @@ while True:
 		elif event.type == MOUSEBUTTONDOWN:
 			mouseAction = pygame.mouse.get_pressed()
 			if mouseAction[0]:
-				player.weapon.Shoot(player, npcList, mapLevel, frameCount, doors)
+				player.weapon.Shoot(player, npcList, level.getWallMap(), frameCount, doors)
 
 	#Adjust camera angle to be dependent on mouse pos	
 	player.updateAngle(pygame.mouse.get_pos()[0], width, sensitivity)
@@ -126,7 +129,7 @@ while True:
 		door.update()
 
 	#Render Scene
-	Render.renderScene(player,  mapLevel, npcList, spriteList, player.weapon, frameCount, font, doors)
+	Render.renderScene(player,  level.getWallMap(), npcList, spriteList, player.weapon, frameCount, font, doors)
 
 	#Update frame
 	pygame.display.flip()

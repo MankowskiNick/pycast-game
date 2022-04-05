@@ -1,11 +1,11 @@
 
 import pygame, sys, math
-import Sprites, NPC
+import Sprites, NPC, Level
 from pygame.locals import *
 from Sprites import *
 from genericpath import exists
 
-#Create an empty map
+#Create an empty map - this is not gonna work for a bit, ill come back to it
 def createEmptyMap():
     #Define map size
     mWidth = 50
@@ -28,16 +28,17 @@ def createEmptyMap():
     for x in range(0, mWidth):
         currentMap[0][x] = 1
         currentMap[mHeight - 1][x] = 1
-    
+
     return currentMap
 
 def updateSpawnLocation(player, level):
+    wall_level = level.getWallMap()
     for x in range(0, len(level[0])):
         for y in range(0, len(level)):
-            if (level[y][x] == -1):
-                level[y][x] = 0
-    level[int(player.y)][int(player.x)] = -1
-
+            if (wall_level[y][x] == -1):
+                wall_level[y][x] = 0
+    wall_level[int(player.y)][int(player.x)] = -1
+    level.setWallMap(wall_level)
     return level
 
 #Given coords and blocksize calculate where the coords are on the map
@@ -48,15 +49,15 @@ def getMapCoords(mCoords, blockSize):
     return mapX, mapY
 
 #Draw the map information to the screen
-def drawOverlay(px, py, screen, blockSize, npcList, drawMap, mapSpriteList):
-
+def drawOverlay(px, py, screen, blockSize, npcList, level, mapSpriteList):
+    drawMap = level.getWallMap()
     #Draw walls to the screen
     for x in range(0,len(drawMap[0])):
         for y in range(0,len(drawMap)):
             if (drawMap[y][x] > 0 and drawMap[y][x] <= 999):screen.blit(mapSpriteList[drawMap[y][x]], (x * blockSize, y * blockSize))
             elif (drawMap[y][x] == -1):     pygame.draw.circle(screen, (255, 0, 0),((x + 0.5) * blockSize, (y + 0.5) * blockSize), 3)
             else:pygame.draw.rect(screen, (255,255,255), pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
-    
+    #we will need to think of a way to draw floors and ceilings too
     #Draw objects to the screen
     for i in range(0,len(npcList)):
         if npcList[i].type > 999:
@@ -65,6 +66,7 @@ def drawOverlay(px, py, screen, blockSize, npcList, drawMap, mapSpriteList):
     #Draw a circle where the player is
     pygame.draw.circle(screen, (0,0,255),(px * blockSize, py * blockSize), 3)
 
+#Draw the selectable textures
 def drawIcons(height, spriteLookUpTable, mapSpriteList, search_for_click, mouseX, mouseY, screen, currentBlockID):   
         #Render the sprites at the side of the screen & if necessary check which box was clicked and select the according sprite
         yCheck = int((height)  / (mapSpriteList[spriteLookUpTable[0]].get_height()*2)) * mapSpriteList[spriteLookUpTable[0]].get_height() * 2
@@ -85,6 +87,7 @@ def drawIcons(height, spriteLookUpTable, mapSpriteList, search_for_click, mouseX
                 pygame.draw.rect(screen, (0,255,0), (xDisplacement + height, yDisplacement + mapSpriteList[spriteLookUpTable[i]].get_width()*2 - 2, mapSpriteList[spriteLookUpTable[i]].get_width()*2, 2))
         return currentBlockID
 
+#Draw text box for user input(this whole system could be way better and more object oriented, tbh)
 def drawTextBox(screen, width, height, textboxWidth, textboxHeight, font, fileName, actionType):
     pygame.draw.rect(screen, (255,255,255), ((width / 2) - (textboxWidth / 2), (height / 2) - (textboxHeight / 2), textboxWidth, textboxHeight))
     pygame.draw.rect(screen, (128,128,128), ((width / 2) - (textboxWidth / 2), (height / 2) - (textboxHeight / 2), textboxWidth, textboxHeight), 5)
@@ -103,10 +106,11 @@ def getBlocksize(mWidth, mHeight, width, height):
     return bSize
 
 #Get map dimensions
-def getMapDimensions(drawMap):
+def getMapDimensions(level):
+    drawMap = level.getWallMap()
     return len(drawMap[0]), len(drawMap)
 
-def saveMap(drawMap, fileName, npcList, px, py):
+def saveMap(level, fileName, npcList, px, py):
 
     #Change write style depending on if the file exists or not
     if (exists("levels/" + fileName + ".leveldata")):
@@ -114,28 +118,30 @@ def saveMap(drawMap, fileName, npcList, px, py):
     else:
         file = open("levels/" + fileName + ".leveldata", "x")
 
-    tempMap = drawMap
+    floor_map = level.getFloorMap()
+    wall_map = level.getWallMap()
+    ceiling_map = level.getCeilingMap()
 
-    #Add objects to tempMap
+    #Add objects to wall_map
     for i in range(len(npcList)):
-        tempMap[npcList[i].startY][npcList[i].startX] = npcList[i].type
+        wall_map[npcList[i].startY][npcList[i].startX] = npcList[i].type
     
-    #Add player position to tempMap
-    tempMap[int(px)][int(py)] = -1
+    #Add player position to wall_map
+    wall_map[int(px)][int(py)] = -1
 
     #Write map height data to first line of file
-    if (len(tempMap[0]) > 9 and len(tempMap) > 9):
-        file.write(str(len(tempMap[0])) + " " + str(len(tempMap)) + "\n")
-    elif (len(tempMap[0] <= 9)):
-        file.write("0" + str(len(tempMap[0])) + " " + str(len(tempMap)) + "\n")
-    elif (len(tempMap) <= 9):
-        file.write(str(len(tempMap[0])) + " 0" + str(len(tempMap)) + "\n")
+    if (len(wall_map[0]) > 9 and len(wall_map) > 9):
+        file.write(str(len(wall_map[0])) + " " + str(len(wall_map)) + "\n")
+    elif (len(wall_map[0] <= 9)):
+        file.write("0" + str(len(wall_map[0])) + " " + str(len(wall_map)) + "\n")
+    elif (len(wall_map) <= 9):
+        file.write(str(len(wall_map[0])) + " 0" + str(len(wall_map)) + "\n")
 
-    #Write tempMap to file
-    for y in range(0,len(tempMap)):
+    #Write all 3 maps to file, separated b
+    for y in range(0,len(wall_map)):
         temp = ""
-        for x in range(0,len(tempMap[y])):
-            temp += (str(tempMap[y][x]) + " ")
+        for x in range(0,len(wall_map[y])):
+            temp += (str(floor_map[y][x]) + "," + str(wall_map[y][x]) + "," + str(ceiling_map[y][x]) + " ")
         temp += "\n"
         file.write(temp)
     file.close()
@@ -144,7 +150,10 @@ def loadMapFromFile(fileName):
 
     #If the file exists
     if (exists(fileName)):
-        loadMap = []
+        floor_map = []
+        wall_map = []
+        ceiling_map = []
+
         file = open(fileName)
         fileLines = []
         fileLines = file.readlines()
@@ -152,30 +161,45 @@ def loadMapFromFile(fileName):
         mWidth = int(fileLines[0][0:2])
         mHeight = int(fileLines[0][3:5])
         
-        #Parse through level data and store information in loadMap list
+        #Parse through level data and store information in wall_map list
         for y in range(1,mHeight + 1):
-            temp = []
+            temp_floor = []
+            temp_wall = []
+            temp_ceiling = []
             currentParser = 0
             for x in range(0,mWidth):
                 oldParser = currentParser
                 currentParser = fileLines[y].find(" ", oldParser + 1, len(fileLines[y]))
-                temp.append(int(fileLines[y][oldParser:currentParser]))
-            loadMap.append(temp)
+                new_floor, new_wall, new_ceiling = fileLines[y][oldParser:currentParser].split(",")
+                #new_floor, new_wall, new_ceiling = int(new_floor_str), int(new_wall_str), int(new_ceiling_str)
+                temp_floor.append(int(new_floor))
+                temp_wall.append(int(new_wall))
+                temp_ceiling.append(int(new_ceiling))
+                #temp.append(int(fileLines[y][oldParser:currentParser]))
+            floor_map.append(temp_floor)
+            wall_map.append(temp_wall)
+            ceiling_map.append(temp_ceiling)
+
         file.close()
 
         #Define a new NPCList given the map
-        npcList = NPC.findNPC(loadMap)
+        npcList = NPC.findNPC(wall_map)
 
-        return loadMap, npcList, True, mWidth, mHeight
+        level = Level.Level(floor_map, wall_map, ceiling_map)
+
+        return level, npcList, True, mWidth, mHeight
     
     #If the file doesn't exist
     else:
         print("File not found.")
-        return [], [], False, 0, 0
 
-def Main(player, currentMap, npcList, levelHIR):
+        level = Level.Level([], [], [])
+        return level, [], False, 0, 0
+
+def Main(player, level, npcList, levelHIR):
     px, py = player.x, player.y
     pygame.init()
+    currentMap = level.getWallMap()
 
     width, height = (800, 600)
 
@@ -249,13 +273,13 @@ def Main(player, currentMap, npcList, levelHIR):
 
                         #Saving file
                         if actionType == "Save file: ":
-                            saveMap(currentMap, fileName, npcList, px, py)
+                            saveMap(level, fileName, npcList, px, py)
 
                         #Opening file
                         if actionType == "Open file: ":
                             tempMap, tempNPCList, fileExists, mapWidth, mapHeight = loadMapFromFile("levels/" + fileName + ".leveldata")
                             if (fileExists):
-                                currentMap = tempMap
+                                level = tempMap
                                 npcList = tempNPCList
                                 
                                 blockSize = getBlocksize(mapWidth, mapHeight, width, height)
@@ -275,7 +299,8 @@ def Main(player, currentMap, npcList, levelHIR):
                 
                 #Quit event
                 elif event.key == K_q or event.key == K_ESCAPE:
-                    return currentMap, npcList
+                    level.setFloorMap(currentMap)
+                    return level, npcList
 
                 #Save file event
                 elif event.key == K_s:
@@ -291,16 +316,18 @@ def Main(player, currentMap, npcList, levelHIR):
                 elif event.key == K_e:
                     currentlyTyping = True
                     actionType = "Export file: "
-                
-                #New map creation event
-                elif event.key == K_n:
-                    currentMap = createEmptyMap()
-                    npcList = []
-                    mapWidth, mapHeight = getMapDimensions(currentMap)
-                    blockSize = getBlocksize(mapWidth, mapHeight, width, height)
-                    for i in range(0,len(spriteLookUpTable)):
-                        mapSpriteList[spriteLookUpTable[i]] = pygame.transform.scale(mapSpriteList[spriteLookUpTable[i]], (blockSize, blockSize))
-                                
+                    '''
+                    this isn't gonna work for a bit, ill come back to it
+                    remember to unindent when uncommenting
+                    #New map creation event
+                    elif event.key == K_n:
+                        currentMap = createEmptyMap()
+                        npcList = []
+                        mapWidth, mapHeight = getMapDimensions(currentMap)
+                        blockSize = getBlocksize(mapWidth, mapHeight, width, height)
+                        for i in range(0,len(spriteLookUpTable)):
+                            mapSpriteList[spriteLookUpTable[i]] = pygame.transform.scale(mapSpriteList[spriteLookUpTable[i]], (blockSize, blockSize))
+                    '''   
                 elif event.key == K_u:
                     currentMap = updateSpawnLocation(player, currentMap)
                 
@@ -364,7 +391,7 @@ def Main(player, currentMap, npcList, levelHIR):
         currentBlockID = drawIcons(height, spriteLookUpTable, mapSpriteList, search_for_click, mouseX, mouseY, screen, currentBlockID)
         
         #Draw map to the screen
-        drawOverlay(px, py, screen, blockSize, npcList, currentMap, mapSpriteList)
+        drawOverlay(px, py, screen, blockSize, npcList, level, mapSpriteList)
 
         #If the textbox is active, draw it
         if currentlyTyping:
