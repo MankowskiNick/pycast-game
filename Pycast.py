@@ -56,7 +56,7 @@ pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 pygame.key.set_repeat(10,10)
 while True:
 	frameCount+=1
-
+	
 	#Set framerate
 	clock.tick(144)
 

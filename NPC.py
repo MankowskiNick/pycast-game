@@ -567,11 +567,12 @@ class NPCWeapon:
 		self.range = range
 		self.bulletCount = bulletCount
 
+
 	#Raycast check wall(simple, not a lot of checks)
-	def checkWallDist(self, player, enemy, level, doors):
+	def checkWallDist(self, px, py, angle, level, doors):
 
 		#Casting 1 ray to test functionality
-		rayAng = math.tan((player.y - enemy.y) / (player.x - enemy.x))
+		rayAng = angle
 
 		#These booleans will run our while loops 
 		horizCollision = False
@@ -583,8 +584,8 @@ class NPCWeapon:
 		drawDist = 0.0
 
 		#Resetting variables
-		x = enemy.x
-		y = enemy.y
+		x = px
+		y = py
 
 		cX = 0
 		cY = 0
@@ -596,12 +597,12 @@ class NPCWeapon:
 		#Is the player looking up or down? We have different distance to the next y integer point depending on the characters facing. Let's calculate those values.
 		#Camera is looking up
 		if rayAng >= math.pi:
-			cY = int(enemy.y) - enemy.y
+			cY = int(py) - py
 			dY = -1
 			
 		#Camera is looking down
 		elif rayAng < math.pi:
-			cY = int(enemy.y + 1) - enemy.y
+			cY = int(py + 1) - py
 			dY = 1
 
 		#Calculate the change in x to the next integer from the starting position, as well as the change in x afterwards
@@ -619,7 +620,7 @@ class NPCWeapon:
 
 			#Prevent out of bound error while looking through map array
 			if int(y) >= len(level) or int(x) >= len(level[0]) or int(y) < 0 or int(x) < 0:
-				horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+				horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 				horizCollision = True
 
 			#Is the player looking up or down? This matters because the tile is seen as the top edge,
@@ -629,7 +630,7 @@ class NPCWeapon:
 
 				#Collision? If yes, break loop and have distance value set
 				if (level[int(y-1)][int(x)] > 0 and level[int(y-1)][int(x)] <= 899):
-					horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+					horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 					horizCollision = True
 
 				#DOOR CHECK
@@ -641,7 +642,7 @@ class NPCWeapon:
 		
 					if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:				
 						if (level[int(y - 1 - 0.5*dY)][int(x + 0.5*dX + doors[doorID].offset)] == currentTile):
-							horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2)) + 0.5
+							horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
 							horizCollision = True
 						else:
 							x += dX
@@ -660,7 +661,7 @@ class NPCWeapon:
 
 				#Collision? If yes, break loop and have distance value set
 				if (level[int(y)][int(x)] > 0 and level[int(y)][int(x)] <= 899):
-					horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+					horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 					horizCollision = True
 				
 				#DOOR CHECK
@@ -672,7 +673,7 @@ class NPCWeapon:
 					
 					if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
 						if (level[int(y + 0.5*dY)][int(x + 0.5*dX + doors[doorID].offset)] == currentTile):
-							horizDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2)) + 0.5
+							horizDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
 							horizCollision = True
 						else:
 							x += dX
@@ -687,8 +688,8 @@ class NPCWeapon:
 					y += dY
 
 		#Resetting variable values
-		x = enemy.x
-		y = enemy.y
+		x = px
+		y = py
 
 		cX = 0
 		cY = 0
@@ -700,12 +701,12 @@ class NPCWeapon:
 		#Is the player looking right or left? We have different distance to the next x integer point depending on the characters facing. Let's calculate those values.
 		#Camera is looking left
 		if rayAng >= math.pi / 2 and rayAng <= math.pi * 3/2:
-			cX = int(enemy.x) - enemy.x
+			cX = int(px) - px
 			dX = -1
 
 		#Camera is looking right
 		elif rayAng > math.pi * 3/2 or rayAng < math.pi / 2: #Looking right
-			cX = int(enemy.x + 1) - enemy.x
+			cX = int(px + 1) - px
 			dX = 1
 
 		#Calculate the change in y to the next integer from the starting position, as well as the change in y afterwards
@@ -721,7 +722,7 @@ class NPCWeapon:
 
 			#Prevent out of bound error while looking through map array
 			if int(y) >= len(level) or int(x) >= len(level[0]) or int(y) < 0 or int(x) < 0:
-				vertDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+				vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 				vertCollision = True
 
 			#Is the player looking left or right? This matters because the tile is seen as the left edge,
@@ -730,7 +731,7 @@ class NPCWeapon:
 			elif rayAng >= math.pi / 2 and rayAng <= math.pi * 3/2:
 				#Collision? If yes, break loop and have distance value set
 				if (level[int(y)][int(x-1)] > 0 and level[int(y)][int(x-1)] <= 899):
-					vertDist = math.sqrt(pow(x - player.x,2) + pow(y-player.y,2))
+					vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 					vertCollision = True
 
 				#DOOR CHECK
@@ -742,7 +743,7 @@ class NPCWeapon:
 					
 					if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
 						if (level[int(y + 0.5*dY + doors[doorID].offset)][int(x - 1 - 0.5*dX)] == currentTile):
-							vertDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2)) + 0.5
+							vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
 							vertCollision = True
 						else:
 							x += dX
@@ -761,7 +762,7 @@ class NPCWeapon:
 
 				#Collision? If yes, break loop and have distance value set
 				if (level[int(y)][int(x)] > 0 and level[int(y)][int(x)] <= 899):
-					vertDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2))
+					vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2))
 					vertCollision = True
 							
 				#DOOR CHECK
@@ -773,7 +774,7 @@ class NPCWeapon:
 					
 					if int(y + 0.5*dY) < len(level) and int(y + 0.5*dY) >= 0 and int(x + 0.5*dX) < len(level) and int(x + 0.5*dX) >= 0:# and not doors[doorID].isOpen:
 						if (level[int(y + 0.5*dY + doors[doorID].offset)][int(x + 0.5*dX)] == currentTile):
-							vertDist = math.sqrt(pow(x-enemy.x,2) + pow(y-enemy.y,2)) + 0.5
+							vertDist = math.sqrt(pow(x-px,2) + pow(y-py,2)) + 0.5
 							vertCollision = True
 						else:
 							x += dX
@@ -796,11 +797,10 @@ class NPCWeapon:
 
 		#Return the distance from the 
 		return drawDist
-	
+
 	def Shoot(self, enemy, player, level, doors):
 		distToPlayer = math.sqrt(pow(player.x - enemy.x, 2) + pow(player.y - enemy.y, 2))
-		distToWall = self.checkWallDist(player, enemy, level, doors)
-
+		distToWall = self.checkWallDist(player.x, player.y, math.atan((player.y - enemy.y) / (player.x - enemy.x)), level, doors)
 		if distToPlayer < distToWall and distToPlayer <= self.range:
-			#Sound.Shoot_Sound(1)
+			Sound.Shoot_Sound(1)
 			player.takeDamage(self.damage)
