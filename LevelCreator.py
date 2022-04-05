@@ -54,14 +54,25 @@ def getMapCoords(mCoords, blockSize):
     return mapX, mapY
 
 #Draw the map information to the screen
-def drawOverlay(px, py, screen, blockSize, npcList, level, mapSpriteList):
+def drawOverlay(px, py, screen, blockSize, npcList, level, mapSpriteList, showingFloor):
     drawMap = level.getWallMap()
+    floorMap = level.getFloorMap()
+    ceilingMap = level.getCeilingMap()
+
     #Draw walls to the screen
     for x in range(0,len(drawMap[0])):
         for y in range(0,len(drawMap)):
             if (drawMap[y][x] > 0 and drawMap[y][x] <= 999):screen.blit(mapSpriteList[drawMap[y][x]], (x * blockSize, y * blockSize))
-            elif (drawMap[y][x] == -1):     pygame.draw.circle(screen, (255, 0, 0),((x + 0.5) * blockSize, (y + 0.5) * blockSize), 3)
-            else:pygame.draw.rect(screen, (255,255,255), pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
+            
+            else:
+                if (showingFloor): #showing floor
+                    if (floorMap[y][x] > 0): screen.blit(mapSpriteList[floorMap[y][x]], (x * blockSize, y * blockSize))
+                    else: pygame.draw.rect(screen, (255,255,255), pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
+                else: #showing ceiling
+                    if (ceilingMap[y][x] > 0): screen.blit(mapSpriteList[ceilingMap[y][x]], (x * blockSize, y * blockSize))
+                    else: pygame.draw.rect(screen, (255,255,255), pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
+                #pygame.draw.rect(screen, (255,255,255), pygame.Rect(x * blockSize, y * blockSize, blockSize, blockSize), 2)
+            if (drawMap[y][x] == -1):     pygame.draw.circle(screen, (255, 0, 0),((x + 0.5) * blockSize, (y + 0.5) * blockSize), 3)
     #we will need to think of a way to draw floors and ceilings too
     #Draw objects to the screen
     for i in range(0,len(npcList)):
@@ -101,11 +112,43 @@ def drawTextBox(screen, width, height, textboxWidth, textboxHeight, font, fileNa
     displayRender = font.render(actionType, True, (0,0,0))
     screen.blit(displayRender, displayRender.get_rect(center = (width / 2, (height / 2) - 50)))
     screen.blit(filenameRender, filenameRender.get_rect(center = screen.get_rect().center))
-        
+
+#Display whether we are showing floor or ceiling
+def drawTileSelection(screen, width, height, font, showingFloor, currentlyEditing):
+    if showingFloor:
+        #Highlight floor
+        pygame.draw.rect(screen, (0,255,0), (0, height - 50, 90, 22), 3)
+        pygame.draw.rect(screen, (255,0,0), (0, height - 25, 90, 22), 3)
+    else:
+        pygame.draw.rect(screen, (255,0,0), (0, height - 50, 90, 25), 3)
+        pygame.draw.rect(screen, (0,255,0), (0, height - 25, 90, 25), 3)
+
+    if (currentlyEditing == 0):
+        pygame.draw.rect(screen, (0,255,0), (100, height - 50, 82, 22), 3)
+        pygame.draw.rect(screen, (255,0,0), (182, height - 50, 82, 22), 3)
+        pygame.draw.rect(screen, (255,0,0), (264, height - 50, 82, 22), 3)
+    elif (currentlyEditing == 1):
+        pygame.draw.rect(screen, (255,0,0), (100, height - 50, 82, 22), 3)
+        pygame.draw.rect(screen, (0,255,0), (182, height - 50, 82, 22), 3)
+        pygame.draw.rect(screen, (255,0,0), (264, height - 50, 82, 22), 3)
+    elif (currentlyEditing == 2):
+        pygame.draw.rect(screen, (255,0,0), (100, height - 50, 82, 22), 3)
+        pygame.draw.rect(screen, (255,0,0), (182, height - 50, 82, 22), 3)
+        pygame.draw.rect(screen, (0,255,0), (264, height - 50, 82, 22), 3)
+    floorText = font.render("Showing floor", True, (255,255,255))
+    ceilingText = font.render("Showing ceiling", True, (255,255,255))
+
+    editingText = font.render("Editing Floor   Editing Walls  Editing Ceiling", True, (255, 255, 255))
+
+    screen.blit(floorText, (3, height - 47))
+    screen.blit(ceilingText, (3, height - 22))
+
+    screen.blit(editingText, (103, height  - 47))
+
 #Get the length in pixels of 1 unit
 def getBlocksize(mWidth, mHeight, width, height):
-    if (width / mWidth > height / mHeight):
-        bSize = height / mHeight
+    if (width / mWidth > (height - 50) / mHeight):
+        bSize = (height - 50) / mHeight
     else:
         bSize = width / mWidth
     return bSize
@@ -204,7 +247,10 @@ def loadMapFromFile(fileName):
 def Main(player, level, npcList, levelHIR):
     px, py = player.x, player.y
     pygame.init()
-    currentMap = level.getWallMap()
+    floor_map = level.getFloorMap()
+    wall_map = level.getWallMap()
+    ceiling_map = level.getCeilingMap()
+
 
     width, height = (800, 600)
 
@@ -212,7 +258,8 @@ def Main(player, level, npcList, levelHIR):
     pygame.display.set_caption("Map Generator")
 
     #Create new font for rendering textboxes
-    font = pygame.font.Font(None, 30)
+    font1 = pygame.font.Font("assets/system/font/COMIC.TTF", 30)
+    font2 = pygame.font.Font("assets/system/font/COMIC.TTF", 12)
 
     #Define colors
     black = (0,0,0)
@@ -221,8 +268,14 @@ def Main(player, level, npcList, levelHIR):
     red = (255,0,0)
     blue = (0,0,255)
 
+    #Boolean to flip between showing ceilings and floor
+    showingFloor = True
+
+    #What are we currently editing?
+    currentlyEditing = 2 #0 = floor, 1 = wall, 2 = ceiling
+
     #Define height and width of the currently viewed map
-    mapWidth, mapHeight = len(currentMap[0]), len(currentMap)
+    mapWidth, mapHeight = len(wall_map[0]), len(wall_map)
 
     #Define the currently selected block
     currentBlockID = 1
@@ -292,7 +345,7 @@ def Main(player, level, npcList, levelHIR):
                                     mapSpriteList[spriteLookUpTable[i]] = pygame.transform.scale(mapSpriteList[spriteLookUpTable[i]], (blockSize, blockSize))
                                 
                             else:
-                                mapWidth, mapHeight = getMapDimensions(currentMap)
+                                mapWidth, mapHeight = getMapDimensions(level)
 
                         #Reset things to stop typing
                         currentlyTyping = False
@@ -304,7 +357,9 @@ def Main(player, level, npcList, levelHIR):
                 
                 #Quit event
                 elif event.key == K_q or event.key == K_ESCAPE:
-                    level.setFloorMap(currentMap)
+                    level.setFloorMap(floor_map)
+                    level.setWallMap(wall_map)
+                    level.setCeilingMap(ceiling_map)
                     return level, npcList
 
                 #Save file event
@@ -331,8 +386,13 @@ def Main(player, level, npcList, levelHIR):
                     for i in range(0,len(spriteLookUpTable)):
                         mapSpriteList[spriteLookUpTable[i]] = pygame.transform.scale(mapSpriteList[spriteLookUpTable[i]], (blockSize, blockSize))
                 elif event.key == K_u:
-                    currentMap = updateSpawnLocation(player, currentMap)
-                
+                    wall_map = updateSpawnLocation(player, wall_map)
+                elif event.key == K_f:
+                    if showingFloor:
+                        showingFloor = False
+                    else:
+                        showingFloor = True
+
                 #Keyboard input for selecting the given tile
                 for i in range(0,9):
                     if event.key == i + 49:
@@ -355,50 +415,79 @@ def Main(player, level, npcList, levelHIR):
                         canPlace = False
 
                 #Is the mouse clicking in the bound of the map?
-                if mapX < len(currentMap[0]) and mapX >= 0 and mapY < len(currentMap) and mapY >= 0:
+                if mapX < len(wall_map[0]) and mapX >= 0 and mapY < len(wall_map) and mapY >= 0:
                     #Are we not placing an entity on top of another?
                     if canPlace:
-                        if currentBlockID < 1000:
-                            currentMap[int(mapY)][int(mapX)] = currentBlockID
+                        if currentBlockID < 1000 and currentlyEditing == 1:
+                            wall_map[int(mapY)][int(mapX)] = currentBlockID
+                        elif currentBlockID < 1000 and currentlyEditing == 0:
+                            floor_map[int(mapY)][int(mapX)] = currentBlockID
+                        elif currentBlockID < 1000 and currentlyEditing == 2:
+                            ceiling_map[int(mapY)][int(mapX)] = currentBlockID
                         elif currentBlockID < 2000:
                             npcList.append(NPC.NPC((mapX, mapY), currentBlockID, len(npcList), 100))
-                            currentMap[int(mapY)][int(mapX)] = currentBlockID
+                            wall_map[int(mapY)][int(mapX)] = currentBlockID
                         elif currentBlockID > 1999:
                             npcList.append(NPC.NPC((mapX, mapY), currentBlockID, len(npcList), 100))
-                            npcList[len(npcList) - 1].giveHIR(levelHIR, player, currentMap)
+                            npcList[len(npcList) - 1].giveHIR(levelHIR, player, wall_map)
                 
                 #If the map is out of bounds, check to see if we are selecting a new tile
                 else:
                     search_for_click = True
                     mouseX, mouseY = pygame.mouse.get_pos()
 
+                    #Search for click inside the show ceiling/floor buttons
+                    if (mouseX > 0 and mouseX < 90):
+                        if (mouseY < height - 25 and mouseY >= height - 50):
+                            showingFloor = True
+                            search_for_click = False
+                        elif (mouseY < height and mouseY >= height - 25):
+                            showingFloor = False
+                            search_for_click = False
+                    elif (mouseY < height - 25 and mouseY >= height - 50):
+                        if (mouseX > 100 and mouseX < 182):
+                            currentlyEditing = 0
+                        elif (mouseX > 182 and mouseX < 264):
+                            currentlyEditing = 1
+                        elif (mouseX > 264 and mouseX < 346):
+                            currentlyEditing = 2
+                    
+
             #If the right mouse button is currently pressed
             if (mouseAction[2]):
 
                 #If the mouse is in the bounds of the map
-                if (mapX < len(currentMap[0]) and mapX >= 0 and mapY < len(currentMap) and mapY >= 0):
+                if (mapX < len(wall_map[0]) and mapX >= 0 and mapY < len(wall_map) and mapY >= 0):
                     
                     #Remove NPC closest
-                    for npc in npcList:
-                        if math.pow(math.pow(mapX - npc.x, 2) + math.pow(mapY - npc.y, 2), 0.5) < 0.5:
-                            npcList.remove(npc)
-                            for n in range(0,len(npcList)):
-                                npcList[n].updateLabel(n)
-                            break
+                    if (currentlyEditing == 1):
+                        for npc in npcList:
+                            if math.pow(math.pow(mapX - npc.x, 2) + math.pow(mapY - npc.y, 2), 0.5) < 0.5:
+                                npcList.remove(npc)
+                                for n in range(0,len(npcList)):
+                                    npcList[n].updateLabel(n)
+                                break
                     
                     #Set the current map value to zero(erase blocks and objects)
-                    currentMap[int(mapY)][int(mapX)] = 0
-        
+                    if (currentlyEditing == 0):
+                        floor_map[int(mapY)][int(mapX)] = 0
+                    elif (currentlyEditing == 1):
+                        wall_map[int(mapY)][int(mapX)] = 0
+                    elif (currentlyEditing == 2):
+                        ceiling_map[int(mapY)][int(mapX)] = 0
+
         #Draw the options for different blocks and return the value if one is clicked
         currentBlockID = drawIcons(height, spriteLookUpTable, mapSpriteList, search_for_click, mouseX, mouseY, screen, currentBlockID)
         
         #Draw map to the screen
-        drawOverlay(px, py, screen, blockSize, npcList, level, mapSpriteList)
+        drawOverlay(px, py, screen, blockSize, npcList, level, mapSpriteList, showingFloor)
 
         #If the textbox is active, draw it
         if currentlyTyping:
-            drawTextBox(screen, width, height, textboxWidth, textboxHeight, font, fileName, actionType)
+            drawTextBox(screen, width, height, textboxWidth, textboxHeight, font1, fileName, actionType)
         
+        drawTileSelection(screen, width, height, font2, showingFloor, currentlyEditing)
+
         #Update screen
         pygame.draw.circle(screen, (150,150,150), (pygame.mouse.get_pos()), 5)
         pygame.display.flip()
