@@ -17,6 +17,16 @@ def findNPC(focusMap):
 				continue
 	return npcList
 
+def updateNPC(npcList, player, level, doors, frameCount):	
+	#Update NPCs
+	for i in range(0,len(npcList)):
+		if npcList[i].walk(player, level.getWallMap(), npcList, doors, frameCount):
+
+			#Cull the npc if it true
+			npcList.pop(i)
+			updateLabels = True
+			break
+
 #Return the list position of a door if the coords are near said door
 def getDoor(doors, coords):
 	for i in range(0, len(doors)):

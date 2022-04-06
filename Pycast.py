@@ -20,7 +20,6 @@ weaponList = createWeaponList(weaponSpriteList, boomList)
 
 #Load map and NPC list & delete values we don't need
 level, npcList, tmp1, tmp2, tmp3 = LevelCreator.loadMapFromFile("levels/level.leveldata")
-#level = Level.Level(wall_level)
 
 del tmp1, tmp2, tmp3
 
@@ -44,6 +43,7 @@ player.updateWeapon(weaponList[1])
 
 #Declare framecount
 frameCount = 0
+fpsSum = 0
 
 #Keep track of whether or not we need to update labels
 updateLabels = False
@@ -58,10 +58,11 @@ pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
 pygame.key.set_repeat(10,10)
 while True:
 	frameCount+=1
+	fpsSum += clock.get_fps()
 
 	#Set framerate
 	clock.tick(144)
-
+	
 	#Update NPCs
 	for i in range(0,len(npcList)):
 		if npcList[i].walk(player, level.getWallMap(), npcList, doors, frameCount):
@@ -70,7 +71,7 @@ while True:
 			npcList.pop(i)
 			updateLabels = True
 			break
-
+	
 	#Update npc labels
 	if updateLabels:
 		for n in range(0, len(npcList)):
@@ -79,7 +80,7 @@ while True:
 	#Cycle through each event that occurs in a frame
 	for event in pygame.event.get():
 
-		#Make sure we can exit the window
+		#Make sure we can exit the windows
 		if event.type == pygame.QUIT:
 			pygame.quit()
 			sys.exit()
@@ -89,6 +90,7 @@ while True:
 
 			#Handling escape key exit
 			if event.key == K_ESCAPE:
+				print("Average FPS: " + str(fpsSum / frameCount))
 				pygame.quit()
 				sys.exit()
 

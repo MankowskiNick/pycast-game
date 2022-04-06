@@ -38,13 +38,12 @@ def createEmptyMap():
 
 def updateSpawnLocation(player, level):
     wall_level = level.getWallMap()
-    for x in range(0, len(level[0])):
-        for y in range(0, len(level)):
+    for x in range(0, len(wall_level[0])):
+        for y in range(0, len(wall_level)):
             if (wall_level[y][x] == -1):
                 wall_level[y][x] = 0
     wall_level[int(player.y)][int(player.x)] = -1
-    level.setWallMap(wall_level)
-    return level
+    return wall_level
 
 #Given coords and blocksize calculate where the coords are on the map
 def getMapCoords(mCoords, blockSize):
@@ -272,7 +271,7 @@ def Main(player, level, npcList, levelHIR):
     showingFloor = True
 
     #What are we currently editing?
-    currentlyEditing = 2 #0 = floor, 1 = wall, 2 = ceiling
+    currentlyEditing = 1 #0 = floor, 1 = wall, 2 = ceiling
 
     #Define height and width of the currently viewed map
     mapWidth, mapHeight = len(wall_map[0]), len(wall_map)
@@ -386,7 +385,7 @@ def Main(player, level, npcList, levelHIR):
                     for i in range(0,len(spriteLookUpTable)):
                         mapSpriteList[spriteLookUpTable[i]] = pygame.transform.scale(mapSpriteList[spriteLookUpTable[i]], (blockSize, blockSize))
                 elif event.key == K_u:
-                    wall_map = updateSpawnLocation(player, wall_map)
+                    wall_map = updateSpawnLocation(player, level)
                 elif event.key == K_f:
                     if showingFloor:
                         showingFloor = False
