@@ -7,3 +7,4 @@ global turnAdjust
 global playerX, playerY, playerAngle
 global fov
 global black, white, gray, red, blue
+global rayPixelWidth, floorPixelHeight

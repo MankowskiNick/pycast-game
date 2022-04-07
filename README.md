@@ -18,6 +18,8 @@ Raycasting engine written in Python with the Pygame library.
 +Added ability to easily change the spawn location in level editor by pressing 'u'  
 +Added ability to remove any NPC from level editor  
 +Added sounds for doors, guns, and pickups  
++Added textured floors & ceilings   
++Added dynamic resolution scaling  
 ### 1/19
 +Optimized LevelCreator.py  
 +Added fullscreen support(fullscreen option in Render.py)  
@@ -47,8 +49,6 @@ Initial Commit
 Below is a list of changes I intend to make, as of now, this is **all** that will be done before this project is considered "complete" and is to serve as a checklist.  This, of course, is tentative.  This list will be done mostly in order from top to bottom, starting with all of the intended technical changes.
 
 ## Upcoming technical changes
-###### 0% Add floor and wall casting w/ skybox
-###### 0% -Potentially add support for varied height for floors and ceilings
 ###### 0% -Add support for changing levels
 ###### 0% -Add support for menus
 ###### 0% -Add documentation for adding new things to engine(wall textures, objects, npcs, pickups, weapons)

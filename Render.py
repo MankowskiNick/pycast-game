@@ -22,6 +22,9 @@ gfxConfig.read('gfx.conf')
 width = int(gfxConfig['WINDOW']['width'])
 height = int(gfxConfig['WINDOW']['height'])
 fullscreen = gfxConfig.getboolean('WINDOW', 'fullscreen')
+dynamicResolutionScaling = gfxConfig.getboolean('RENDER', 'DynamicResolutionScaling')
+DRS_fpsMinimum = int(gfxConfig['RENDER']['DRS_fpsMinimum'])
+DRS_fpsMaximum = int(gfxConfig['RENDER']['DRS_fpsMaximum'])
 rayPixelWidth = int(gfxConfig['RENDER']['RayResolution'])
 floorPixelHeight = int(gfxConfig['RENDER']['FloorPixelHeight'])
 spriteDimension = int(gfxConfig['RENDER']['SpriteDimension'])
@@ -30,7 +33,7 @@ blockSize = int(gfxConfig['MINIMAP']['MinimapBlockSize'])
 drawMinimap = gfxConfig.getboolean('MINIMAP', 'DrawMiniMap')
 
 #Scalar used to draw heights at the appropriate height
-sizeModifier = height# * 3 / 4
+sizeModifier = height
 
 radPerPix = -width / fov
 
@@ -43,8 +46,6 @@ font = pygame.font.Font(None, 30)
 #Create screen object with global scope
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("PyCasting")
-
-screen.set_alpha(None)
 
 #Add sky
 sky = pygame.image.load("assets/system/sky.jpg")
@@ -726,6 +727,10 @@ def drawObj(screen, x, y, angle, npcList, spriteList, level, doors):
 
 #Render the scene given the player coords & level
 def renderScene(player, level, npcList, spriteList, currentWeapon, frameCount, font, doors):
+	global rayPixelWidth, floorPixelHeight
+
+	startTime = pygame.time.get_ticks()
+	
 	floor_map = level.getFloorMap()
 	ceiling_map = level.getCeilingMap()
 
@@ -793,3 +798,19 @@ def renderScene(player, level, npcList, spriteList, currentWeapon, frameCount, f
 
 	#Draw minimap
 	drawOverlay(player, screen, npcList, level.getWallMap())
+
+	#Dynamic resolution scaling, if enabled will target FPS
+	if (dynamicResolutionScaling):
+		frameRate = 1000/(pygame.time.get_ticks() - startTime)
+		if (frameRate < DRS_fpsMinimum):
+			rayPixelWidth += 2
+			floorPixelHeight += 1
+
+		elif (frameRate > DRS_fpsMaximum):
+			rayPixelWidth -= 2
+			floorPixelHeight -= 1
+
+		if floorPixelHeight < 1:
+			floorPixelHeight = 1
+		if rayPixelWidth < 1:
+			rayPixelWidth = 1

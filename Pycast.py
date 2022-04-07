@@ -61,7 +61,7 @@ while True:
 	fpsSum += clock.get_fps()
 
 	#Set framerate
-	clock.tick(144)
+	clock.tick(165)
 	
 	#Update NPCs
 	for i in range(0,len(npcList)):
