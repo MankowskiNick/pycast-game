@@ -1,16 +1,6 @@
-import main
-import pygame, configparser
+import main, Button
+import pygame, sys, configparser
 from pygame.locals import *
-
-class Button:
-    def __init__(self, x, y, width, height, sprite):
-        self.x, self.y = x, y
-        self.width, self.height = width, height
-        self.sprite = sprite
-    def Draw(self, screen):
-        screen.blit(self.sprite, (self.x - (self.width / 2), self.y - (self.height / 2)))
-    def CheckPressed(self, mouseX, mouseY):
-        return mouseX > self.x - (width / 2) and mouseX < self.x + (width / 2) and mouseY > self.y - (self.height / 2) and mouseY < self.y + (self.height / 2)
 
 config = configparser.ConfigParser()
 config.read('gfx.conf')
@@ -20,13 +10,26 @@ screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("PyCasting")
 level = "level.leveldata"
 inMenu = True
+playGame = False
 
-quitButtonSprite = pygame.transform.scale(pygame.image.load("assets/object/1000.png"), (200, 50))
+menuBGSprite = pygame.image.load("assets/system/menu/menu_bg.png")
+menuTitleSprite = pygame.image.load("assets/system/menu/menu_title.png")
+playButtonSprite = pygame.image.load("assets/system/menu/play_button.png")
+quitButtonSprite = pygame.image.load("assets/system/menu/exit_button.png")
+loadingPopupSprite = pygame.image.load("assets/system/menu/loading_popup.png")
 
 
-quitButton = Button(width / 2, height / 2, 200, 50, quitButtonSprite)
+playButton = Button.Button(width / 2, 288, 350, 125, playButtonSprite)
+quitButton = Button.Button(width / 2, 438, 350, 125, quitButtonSprite)
+
+menuBG = Button.Button(width / 2, height / 2, width, height, menuBGSprite)
+menuTitle = Button.Button(width / 2, height / 2, width, height, menuTitleSprite)
+
+loadingPopup = Button.Button(width / 2, height / 2, width / 2, 250 / 2, loadingPopupSprite)
 
 while inMenu:
+    screen.fill((255,255,255))
+
     for event in pygame.event.get():
         if event.type == QUIT:
             inMenu = False
@@ -34,8 +37,21 @@ while inMenu:
             mouseX, mouseY = pygame.mouse.get_pos()
             if (quitButton.CheckPressed(mouseX, mouseY)):
                 inMenu = False
-
+                playGame = False
+            if (playButton.CheckPressed(mouseX, mouseY)):
+                inMenu = False
+                playGame = True
+    menuBG.Draw(screen)
+    menuTitle.Draw(screen)
+    playButton.Draw(screen)
     quitButton.Draw(screen)
     pygame.display.flip()
 
-main.RunGame("level.leveldata")
+if playGame:
+
+    loadingPopup.Draw(screen)
+    pygame.display.flip()
+    main.RunGame("level.leveldata")
+
+pygame.quit()
+sys.exit()
