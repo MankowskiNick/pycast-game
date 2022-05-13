@@ -39,19 +39,24 @@ while inMenu:
                 inMenu = False
                 playGame = False
             if (playButton.CheckPressed(mouseX, mouseY)):
-                inMenu = False
+                #inMenu = False
                 playGame = True
+                
+
+
     menuBG.Draw(screen)
     menuTitle.Draw(screen)
     playButton.Draw(screen)
     quitButton.Draw(screen)
+
+    if playGame:
+        playGame = False
+        loadingPopup.Draw(screen)
+        pygame.display.flip()
+        main.RunGame("level.leveldata")
+        pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
     pygame.display.flip()
 
-if playGame:
-
-    loadingPopup.Draw(screen)
-    pygame.display.flip()
-    main.RunGame("level.leveldata")
 
 pygame.quit()
 sys.exit()
