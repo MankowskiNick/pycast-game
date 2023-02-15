@@ -85,8 +85,6 @@ def RunGame(mapFile):
 
 			#Make sure we can exit the windows
 			if event.type == pygame.QUIT:
-				#pygame.quit()
-				#sys.exit()
 				return
 
 			#Handling keyboard input
@@ -95,8 +93,6 @@ def RunGame(mapFile):
 				#Handling escape key exit
 				if event.key == K_ESCAPE:
 					print("Average FPS: " + str(fpsSum / frameCount))
-					#pygame.quit()
-					#sys.exit()
 					return
 
 				#Handle weapon selection

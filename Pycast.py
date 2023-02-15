@@ -3,7 +3,7 @@ import pygame, sys, configparser
 from pygame.locals import *
 
 config = configparser.ConfigParser()
-config.read('gfx.conf')
+config.read('settings.conf')
 width = int(config['WINDOW']['width'])
 height = int(config['WINDOW']['height'])
 screen = pygame.display.set_mode((width, height))

@@ -10,7 +10,7 @@ def getDoor(doors, coords):
 def createWeaponList(weapSpriteList, boomList):
     weaponList = {}
     cfg = configparser.ConfigParser()
-    cfg.read('gfx.conf')
+    cfg.read('settings.conf')
     for option in cfg['WEAPONS']:
         print(option)
         values = cfg['WEAPONS'][option].split(',')

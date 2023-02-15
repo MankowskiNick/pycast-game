@@ -8,7 +8,7 @@ def createSpriteList():
 	#Read sprites from config file
 	spriteList = {}
 	gfxConfig = configparser.ConfigParser()
-	gfxConfig.read('gfx.conf')
+	gfxConfig.read('settings.conf')
 	for option in gfxConfig['SPRITES']:
 		spriteList[int(option)] = pygame.image.load(gfxConfig['SPRITES'][option])
 
@@ -20,7 +20,7 @@ def createWeapSpriteList(width, height):
 	#Read sprites from config file
 	spriteList = {}
 	gfxConfig = configparser.ConfigParser()
-	gfxConfig.read('gfx.conf')
+	gfxConfig.read('settings.conf')
 	for option in gfxConfig['WEAPON_SPRITES']:
 		currentSprites = gfxConfig['WEAPON_SPRITES'][option].split(', ')
 		currentList = []

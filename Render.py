@@ -18,7 +18,7 @@ brown = (235, 143, 52)
 gfxConfig = configparser.ConfigParser()
 
 #Read data values from config file
-gfxConfig.read('gfx.conf')
+gfxConfig.read('settings.conf')
 width = int(gfxConfig['WINDOW']['width'])
 height = int(gfxConfig['WINDOW']['height'])
 fullscreen = gfxConfig.getboolean('WINDOW', 'fullscreen')
@@ -755,6 +755,7 @@ def renderScene(player, level, npcList, spriteList, currentWeapon, frameCount, f
 
 
 		#Define column length so that out draw function looks better
+		#TODO: move to C++
 		enviroRenderOutput = castRay(player.x, player.y, currentAngle, level.getWallMap(), spriteList, doors)
 
 		#Disassemble output tuple
@@ -763,6 +764,7 @@ def renderScene(player, level, npcList, spriteList, currentWeapon, frameCount, f
 		#Draw column, each one will be centered vertically along screen.
 		screen.blit(textureColumn, (i * rayPixelWidth, (height / 2) - (columnLength / 2)))
 		
+		# TODO: move to C++
 		drawFloor(player, currentAngle, floor_map, ceiling_map, columnLength, i * rayPixelWidth, spriteList)
 	
 	drawObj(screen, player.x, player.y, player.angle, npcList, spriteList, level.getWallMap(), doors)
