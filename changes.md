@@ -48,10 +48,10 @@ Initial Commit
 Below is a list of changes I intend to make, as of now, this is **all** that will be done before this project is considered "complete" and is to serve as a checklist.  This, of course, is tentative.  This list will be done mostly in order from top to bottom, starting with all of the intended technical changes.
 
 ## TODO
-Listed in order of current priority
-###### 0% -Add support for multiple levels
-###### 0% -Add support for custom NPC pathfinding
-###### 0% -Add support for using the map builder standalone
-###### 0% -(Maybe?) Build a UI for building elements, not just relying on editing configuration files
-###### 0% -Move performance critical code to C++(rendering, pathfinding)
-###### 50% -Add support for menus
+Listed in order of current priority (0%)
+- Add support for multiple levels (0%)
+- Add support for custom NPC pathfinding (0%)
+- Add support for using the map builder standalone (0%)
+- (Maybe?) Build a UI for building elements, not just relying on editing configuration files (0%)
+- Move performance critical code to C++(rendering, pathfinding) (0%)
+- Add support for menus (50%)
